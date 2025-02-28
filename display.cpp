@@ -1,0 +1,185 @@
+#include <string.h>
+#include <LittleFS.h>
+#include "ESP32-DABplus.h"
+#include "display.h"
+
+TFT_eSPI *Display::m_tft = NULL;
+
+TFT_eSprite *Display::m_statusSprite = NULL;
+// TFT_eSprite *Display::m_slideshowSprite = NULL;
+TFT_eSprite *Display::m_serviceDataSprite = NULL;
+
+fs::File file;
+PNG png;
+
+Display::Display()
+{
+  Serial.println("Initializing display");
+
+  m_calibrationData[0] = 328;
+  m_calibrationData[1] = 3504;
+  m_calibrationData[2] = 348;
+  m_calibrationData[3] = 3233;
+  m_calibrationData[4] = 3;
+
+  m_tft = new TFT_eSPI(TFT_WIDTH, TFT_HEIGHT);
+  m_tft->begin();
+  m_tft->setRotation(1);
+  m_tft->fillScreen(TFT_BLACK);
+  m_tft->setTouch(m_calibrationData);
+
+  m_statusSprite = new TFT_eSprite(m_tft);
+  m_statusSprite->createSprite(480, 30);
+  m_statusSprite->setTextColor(TFT_WHITE, TFT_BLACK);
+  m_statusSprite->setTextSize(1);
+
+//  m_slideshowSprite = new TFT_eSprite(m_tft);
+//  m_slideshowSprite->createSprite(320, 240);
+
+  m_serviceDataSprite = new TFT_eSprite(m_tft);
+  m_serviceDataSprite->createSprite(320, 30);
+  m_serviceDataSprite->setTextColor(TFT_WHITE, TFT_BLACK);
+  m_serviceDataSprite->setTextSize(1);
+
+#if 0
+  m_tft->fillScreen((0xFFFF));
+  m_tft->setCursor(20, 0, 2);
+  m_tft->setTextColor(TFT_BLACK, TFT_WHITE);  m_tft->setTextSize(1);
+  m_tft->println("calibration run");
+
+  m_tft->calibrateTouch(m_calibrationData, TFT_WHITE, TFT_RED, 15);
+  Serial.print("m_calibrationData: ");
+  Serial.print(m_calibrationData[0]);
+  Serial.print(" ");
+  Serial.print(m_calibrationData[1]);
+  Serial.print(" ");
+  Serial.print(m_calibrationData[2]);
+  Serial.print(" ");
+  Serial.print(m_calibrationData[3]);
+  Serial.print(" ");
+  Serial.println(m_calibrationData[4]);
+#endif
+
+  drawTime(12, 0);
+  drawSlideShow(true);
+  drawServiceData("Více rádia");
+}
+
+Display::~Display()
+{
+
+}
+
+void Display::getTouch(uint16_t *x, uint16_t *y)
+{
+  if (m_tft)
+  {
+    m_tft->getTouch(x, y);
+  }
+}
+
+void Display::update()
+{
+}
+
+SPIClass* Display::getSPIinstance()
+{
+  return &m_tft->getSPIinstance();
+}
+
+void Display::drawTime(uint8_t hour, uint8_t min)
+{
+  char time[6];
+
+  sprintf(time, "%02u:%02u", hour, min);
+
+  Serial.print("Time: ");
+  Serial.println(time);
+
+  m_statusSprite->fillRect(0, 0, 60, 30, TFT_BLACK);
+  m_statusSprite->loadFont("Roboto-Regular15", LittleFS);
+  m_statusSprite->setTextDatum(TL_DATUM);
+  m_statusSprite->setCursor(5, 5);
+  m_statusSprite->print(time);
+  m_statusSprite->unloadFont();
+  m_statusSprite->pushSprite(0, 0);
+}
+
+void Display::drawSlideShow(bool logo)
+{
+  if (logo)
+  {
+    int ret = png.open((const char *)"/dab_logo.png", pngOpen, pngClose, pngRead, pngSeek, pngDraw);
+    if (ret == PNG_SUCCESS)
+    {
+      ret = png.decode(NULL, 0);
+      png.close();
+    }
+  }
+  else
+  {
+
+  }
+//  m_slideshowSprite->pushSprite(80, 30);
+}
+
+void Display::drawServiceData(const char *data)
+{
+  m_serviceDataSprite->fillRect(0, 0, 320, 30, TFT_BLACK);
+  m_serviceDataSprite->loadFont("Roboto-Regular20", LittleFS);
+  m_serviceDataSprite->setTextDatum(TL_DATUM);
+  m_serviceDataSprite->setCursor(5, 5);
+  m_serviceDataSprite->print(data);
+  m_serviceDataSprite->unloadFont();
+  m_serviceDataSprite->pushSprite(80, 280);
+}
+
+void* Display::pngOpen(const char *filename, int32_t *size)
+{
+  file = LittleFS.open(filename, "rb");
+  if (!file)
+  {
+    Serial.print("Failed to open ");
+    Serial.println(filename);
+    return NULL;
+  }
+  *size = file.size();
+  return &file;
+}
+
+void Display::pngClose(void *handle)
+{
+  if (file)
+  {
+    file.close();
+  }
+}
+
+int32_t Display::pngRead(PNGFILE *handle, uint8_t *buffer, int32_t length)
+{
+  if (!file)
+  {
+    return 0;
+  }
+
+  return file.read(buffer, length);
+}
+
+int32_t Display::pngSeek(PNGFILE *handle, int32_t position)
+{
+  if (!file)
+  {
+    return 0;
+  }
+  
+  return file.seek(position);
+}
+
+void Display::pngDraw(PNGDRAW *pDraw)
+{
+  uint16_t usPixels[320];
+
+  png.getLineAsRGB565(pDraw, usPixels, PNG_RGB565_BIG_ENDIAN, 0xffffffff);
+//  m_slideshowSprite->pushImage(0, 0 + pDraw->y, pDraw->iWidth, 1, usPixels);
+  m_tft->pushImage(80, 30 + pDraw->y, pDraw->iWidth, 1, usPixels);
+}
