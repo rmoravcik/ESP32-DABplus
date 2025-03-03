@@ -5,6 +5,9 @@
 #include <Arduino.h>
 
 #include <SPI.h>
+
+typedef void (*rdsTextUpdatedType)(String text);
+
 class Radio
 {
 public:
@@ -12,6 +15,7 @@ public:
   virtual ~Radio();
 
   static void serviceData();
+  void setRdsTextUpdatedCallack(rdsTextUpdatedType callback);
   void update();
   void scan();
 
@@ -19,15 +23,18 @@ public:
 
   char* getEnsamble();
   char* getServiceName();
-  char* getServiceData();
+  int8_t getSignalStrength();
 
-
-  void tuneService(uint8_t freq, uint32_t serviceID, uint32_t compID);
+  void tuneService(uint8_t freq, uint32_t serviceID);
 
   static DAB *m_dab;
+  static rdsTextUpdatedType m_rdsTextUpdatedCbf;
 
  private:
   void ensembleInfo();
+
+  uint32_t m_serviceID;
+  static String m_rdsText;
 };
 
 #endif

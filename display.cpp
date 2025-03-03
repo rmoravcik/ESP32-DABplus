@@ -5,12 +5,13 @@
 
 TFT_eSPI *Display::m_tft = NULL;
 
-TFT_eSprite *Display::m_statusSprite = NULL;
-// TFT_eSprite *Display::m_slideshowSprite = NULL;
 TFT_eSprite *Display::m_serviceDataSprite = NULL;
+TFT_eSprite *Display::m_statusBarSprite = NULL;
 
 fs::File file;
 PNG png;
+
+#define SCROLLING_TEXT_SPACING 40
 
 Display::Display()
 {
@@ -22,16 +23,23 @@ Display::Display()
   m_calibrationData[3] = 3233;
   m_calibrationData[4] = 3;
 
+  m_rdsText = "";
+  m_rdsTextWidth = 0;
+  m_rdsTextOffset = 0;
+
   m_tft = new TFT_eSPI(TFT_WIDTH, TFT_HEIGHT);
   m_tft->begin();
   m_tft->setRotation(1);
   m_tft->fillScreen(TFT_BLACK);
+  m_tft->setTextColor(TFT_WHITE, TFT_BLACK);
+  m_tft->setTextSize(1);
   m_tft->setTouch(m_calibrationData);
 
-  m_statusSprite = new TFT_eSprite(m_tft);
-  m_statusSprite->createSprite(480, 30);
-  m_statusSprite->setTextColor(TFT_WHITE, TFT_BLACK);
-  m_statusSprite->setTextSize(1);
+  m_statusBarSprite = new TFT_eSprite(m_tft);
+  m_statusBarSprite->createSprite(480, 25);
+  m_statusBarSprite->setTextColor(TFT_WHITE, TFT_BLACK);
+  m_statusBarSprite->setTextSize(1);
+  m_statusBarSprite->loadFont("Roboto-Regular15", LittleFS);
 
 //  m_slideshowSprite = new TFT_eSprite(m_tft);
 //  m_slideshowSprite->createSprite(320, 240);
@@ -40,6 +48,9 @@ Display::Display()
   m_serviceDataSprite->createSprite(320, 30);
   m_serviceDataSprite->setTextColor(TFT_WHITE, TFT_BLACK);
   m_serviceDataSprite->setTextSize(1);
+  m_serviceDataSprite->setColorDepth(8);
+  m_serviceDataSprite->setScrollRect(0, 0, 320, 30);
+  m_serviceDataSprite->loadFont("Roboto-Regular20", LittleFS);
 
 #if 0
   m_tft->fillScreen((0xFFFF));
@@ -62,7 +73,8 @@ Display::Display()
 
   drawTime(12, 0);
   drawSlideShow(true);
-  drawServiceData("Více rádia");
+  drawRdsText(m_welcomeText);
+  drawSignalIndicator(0);
 }
 
 Display::~Display()
@@ -80,6 +92,14 @@ void Display::getTouch(uint16_t *x, uint16_t *y)
 
 void Display::update()
 {
+  if (m_rdsTextWidth > m_serviceDataSprite->width())
+  {
+    drawRdsText(m_rdsText, m_rdsTextOffset++);
+    if (m_rdsTextOffset >= (m_rdsTextWidth + SCROLLING_TEXT_SPACING))
+    {
+      m_rdsTextOffset = 0;
+    }
+  }
 }
 
 SPIClass* Display::getSPIinstance()
@@ -91,18 +111,69 @@ void Display::drawTime(uint8_t hour, uint8_t min)
 {
   char time[6];
 
-  sprintf(time, "%02u:%02u", hour, min);
+  sprintf(time, "%2u:%02u", hour, min);
 
   Serial.print("Time: ");
   Serial.println(time);
 
-  m_statusSprite->fillRect(0, 0, 60, 30, TFT_BLACK);
-  m_statusSprite->loadFont("Roboto-Regular15", LittleFS);
-  m_statusSprite->setTextDatum(TL_DATUM);
-  m_statusSprite->setCursor(5, 5);
-  m_statusSprite->print(time);
-  m_statusSprite->unloadFont();
-  m_statusSprite->pushSprite(0, 0);
+  m_statusBarSprite->fillRect(0, 0, 60, 25, TFT_BLACK);
+  m_statusBarSprite->setTextDatum(TL_DATUM);
+  m_statusBarSprite->drawString(time, 5, 5);
+  m_statusBarSprite->pushSprite(0, 0);
+}
+
+void Display::drawSignalIndicator(int8_t strength)
+{
+  uint16_t x = 451, y = 13;
+  uint8_t level = 0; // 0..5
+
+  if (strength < 10)
+  {
+    level = 1;
+  }
+  else if (strength < 20)
+  {
+    level = 2;
+  }
+  else if (strength < 30)
+  {
+    level = 3;
+  }
+  else if (strength < 40)
+  {
+    level = 4;
+  }
+    else if (strength >= 40)
+  {
+    level = 5;
+  }
+
+  for (uint8_t i = 0; i < 5; i++)
+  {
+    if (i < level)
+    {
+      m_statusBarSprite->fillRect(x + (5 *i), y - (2 * i), 3, 3 + (2 * i), TFT_WHITE);
+    }
+    else
+    {
+      m_statusBarSprite->fillRect(x + (5 *i), y - (2 * i), 3, 3 + (2 * i), TFT_DARKGREY);
+    }
+  }
+
+  m_statusBarSprite->pushSprite(0, 0);
+}
+
+void Display::drawServiceName(const char *name)
+{
+  if (strlen(name) == 0)
+  {
+    return;
+  }
+
+  m_statusBarSprite->fillRect(80, 0, 240, 25, TFT_BLACK);
+  m_statusBarSprite->setTextDatum(TC_DATUM);
+  m_statusBarSprite->drawString(name, 240, 5);
+  m_statusBarSprite->pushSprite(0, 0);
 }
 
 void Display::drawSlideShow(bool logo)
@@ -123,15 +194,41 @@ void Display::drawSlideShow(bool logo)
 //  m_slideshowSprite->pushSprite(80, 30);
 }
 
-void Display::drawServiceData(const char *data)
+void Display::drawRdsText(String text)
 {
+  if (text.isEmpty())
+  {
+    return;
+  }
+
+  m_rdsTextOffset = 0;
+  m_rdsText = text;
+
+  m_rdsTextWidth = drawRdsText(m_rdsText, m_rdsTextOffset);
+}
+
+int32_t Display::drawRdsText(String text, uint16_t offset)
+{
+  int32_t rdsTextWidth = 0;
+ 
   m_serviceDataSprite->fillRect(0, 0, 320, 30, TFT_BLACK);
-  m_serviceDataSprite->loadFont("Roboto-Regular20", LittleFS);
   m_serviceDataSprite->setTextDatum(TL_DATUM);
-  m_serviceDataSprite->setCursor(5, 5);
-  m_serviceDataSprite->print(data);
-  m_serviceDataSprite->unloadFont();
+  m_serviceDataSprite->setTextWrap(false);
+  
+  rdsTextWidth = m_serviceDataSprite->textWidth(text.c_str());
+
+  m_serviceDataSprite->setCursor(0 - offset, 5);
+  m_serviceDataSprite->print(text.c_str());
+
+  if (rdsTextWidth > m_serviceDataSprite->width())
+  {
+    m_serviceDataSprite->setCursor(0 + rdsTextWidth  + SCROLLING_TEXT_SPACING - offset, 5);
+    m_serviceDataSprite->print(text.c_str());
+  }
+  
   m_serviceDataSprite->pushSprite(80, 280);
+
+  return rdsTextWidth;
 }
 
 void* Display::pngOpen(const char *filename, int32_t *size)
@@ -180,6 +277,5 @@ void Display::pngDraw(PNGDRAW *pDraw)
   uint16_t usPixels[320];
 
   png.getLineAsRGB565(pDraw, usPixels, PNG_RGB565_BIG_ENDIAN, 0xffffffff);
-//  m_slideshowSprite->pushImage(0, 0 + pDraw->y, pDraw->iWidth, 1, usPixels);
-  m_tft->pushImage(80, 30 + pDraw->y, pDraw->iWidth, 1, usPixels);
+  m_tft->pushImage(80, 25 + pDraw->y, pDraw->iWidth, 1, usPixels);
 }
