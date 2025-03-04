@@ -82,7 +82,7 @@ void setup()
   m_display = new Display();
   m_radio = new Radio(m_display->getSPIinstance());
   m_radio->setRdsTextUpdatedCallack(rdsTextUpdated);
-  m_radio->scan();
+  // m_radio->scan();
   m_radio->tuneService(27, 0);
 }
 

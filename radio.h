@@ -34,7 +34,6 @@ public:
   void ensembleInfo();
 
   uint32_t m_serviceID;
-  static String m_rdsText;
 };
 
 #endif

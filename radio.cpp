@@ -9,151 +9,148 @@
 DAB *Radio::m_dab = NULL;
 static SPIClass *m_spi = NULL;
 rdsTextUpdatedType Radio::m_rdsTextUpdatedCbf = NULL;
-String Radio::m_rdsText = "Více rádia";
 
-wchar_t rdsCharConverter(const char ch)
+uint16_t rdsCharConverter(const uint8_t ch)
 {
   switch (ch)
   {
-    case 0x20: return L' ';
-    case 0x21 ... 0x5D: return ch;
-    case 0x5E: return L'―';
-    case 0x5F: return L'_';
-    case 0x60: return L'`';
-    case 0x61 ... 0x7d: return ch;
-    case 0x7E: return L'¯';
-    case 0x7F: return L' ';
-    case 0x80: return L'á';
-    case 0x81: return L'à';
-    case 0x82: return L'é';
-    case 0x83: return L'è';
-    case 0x84: return L'í';
-    case 0x85: return L'ì';
-    case 0x86: return L'ó';
-    case 0x87: return L'ò';
-    case 0x88: return L'ú';
-    case 0x89: return L'ù';
-    case 0x8A: return L'Ñ';
-    case 0x8B: return L'Ç';
-    case 0x8C: return L'Ş';
-    case 0x8D: return L'β';
-    case 0x8E: return L'¡';
-    case 0x8F: return L'Ĳ';
-    case 0x90: return L'â';
-    case 0x91: return L'ä';
-    case 0x92: return L'ê';
-    case 0x93: return L'ë';
-    case 0x94: return L'î';
-    case 0x95: return L'ï';
-    case 0x96: return L'ô';
-    case 0x97: return L'ö';
-    case 0x98: return L'û';
-    case 0x99: return L'ü';
-    case 0x9A: return L'ñ';
-    case 0x9B: return L'ç';
-    case 0x9C: return L'ş';
-    case 0x9D: return L'ǧ';
-    case 0x9E: return L'ı';
-    case 0x9F: return L'ĳ';
-    case 0xA0: return L'ª';
-    case 0xA1: return L'α';
-    case 0xA2: return L'©';
-    case 0xA3: return L'‰';
-    case 0xA4: return L'Ǧ';
-    case 0xA5: return L'ě';
-    case 0xA6: return L'ň';
-    case 0xA7: return L'ő';
-    case 0xA8: return L'π';
-    case 0xA9: return L'€';
-    case 0xAA: return L'£';
-    case 0xAB: return L'$';
-    case 0xAC: return L'←';
-    case 0xAD: return L'↑';
-    case 0xAE: return L'→';
-    case 0xAF: return L'↓';
-    case 0xB0: return L'º';
-    case 0xB1: return L'¹';
-    case 0xB2: return L'²';
-    case 0xB3: return L'³';
-    case 0xB4: return L'±';
-    case 0xB5: return L'İ';
-    case 0xB6: return L'ń';
-    case 0xB7: return L'ű';
-    case 0xB8: return L'µ';
-    case 0xB9: return L'¿';
-    case 0xBA: return L'÷';
-    case 0xBB: return L'°';
-    case 0xBC: return L'¼';
-    case 0xBD: return L'½';
-    case 0xBE: return L'¾';
-    case 0xBF: return L'§';
-    case 0xC0: return L'Á';
-    case 0xC1: return L'À';
-    case 0xC2: return L'É';
-    case 0xC3: return L'È';
-    case 0xC4: return L'Í';
-    case 0xC5: return L'Ì';
-    case 0xC6: return L'Ó';
-    case 0xC7: return L'Ò';
-    case 0xC8: return L'Ú';
-    case 0xC9: return L'Ù';
-    case 0xCA: return L'Ř';
-    case 0xCB: return L'Č';
-    case 0xCC: return L'Š';
-    case 0xCD: return L'Ž';
-    case 0xCE: return L'Ð';
-    case 0xCF: return L'Ŀ';
-    case 0xD0: return L'Â';
-    case 0xD1: return L'Ä';
-    case 0xD2: return L'Ê';
-    case 0xD3: return L'Ë';
-    case 0xD4: return L'Î';
-    case 0xD5: return L'Ï';
-    case 0xD6: return L'Ô';
-    case 0xD7: return L'Ö';
-    case 0xD8: return L'Û';
-    case 0xD9: return L'Ü';
-    case 0xDA: return L'ř';
-    case 0xDB: return L'č';
-    case 0xDC: return L'š';
-    case 0xDD: return L'ž';
-    case 0xDE: return L'đ';
-    case 0xDF: return L'ŀ';
-    case 0xE0: return L'Ã';
-    case 0xE1: return L'Å';
-    case 0xE2: return L'Æ';
-    case 0xE3: return L'Œ';
-    case 0xE4: return L'ŷ';
-    case 0xE5: return L'Ý';
-    case 0xE6: return L'Õ';
-    case 0xE7: return L'Ø';
-    case 0xE8: return L'Þ';
-    case 0xE9: return L'Ŋ';
-    case 0xEA: return L'Ŕ';
-    case 0xEB: return L'Ć';
-    case 0xEC: return L'Ś';
-    case 0xED: return L'Ź';
-    case 0xEE: return L'Ŧ';
-    case 0xEF: return L'ð';
-    case 0xF0: return L'ã';
-    case 0xF1: return L'å';
-    case 0xF2: return L'æ';
-    case 0xF3: return L'œ';
-    case 0xF4: return L'ŵ';
-    case 0xF5: return L'ý';
-    case 0xF6: return L'õ';
-    case 0xF7: return L'ø';
-    case 0xF8: return L'þ';
-    case 0xF9: return L'ŋ';
-    case 0xFA: return L'ŕ';
-    case 0xFB: return L'ć';
-    case 0xFC: return L'ś';
-    case 0xFD: return L'ź';
-    case 0xFE: return L'ŧ';
-    case 0xFF: return L' ';
+    case 0x5E: return '―';
+    case 0x5F: return '_';
+    case 0x60: return '`';
+    case 0x7E: return '¯';
+    case 0x7F: return ' ';
+    case 0x80: return 'á';
+    case 0x81: return 'à';
+    case 0x82: return 'é';
+    case 0x83: return 'è';
+    case 0x84: return 'í';
+    case 0x85: return 'ì';
+    case 0x86: return 'ó';
+    case 0x87: return 'ò';
+    case 0x88: return 'ú';
+    case 0x89: return 'ù';
+    case 0x8A: return 'Ñ';
+    case 0x8B: return 'Ç';
+    case 0x8C: return 'Ş';
+    case 0x8D: return 'β';
+    case 0x8E: return '¡';
+    case 0x8F: return 'Ĳ';
+    case 0x90: return 'â';
+    case 0x91: return 'ä';
+    case 0x92: return 'ê';
+    case 0x93: return 'ë';
+    case 0x94: return 'î';
+    case 0x95: return 'ï';
+    case 0x96: return 'ô';
+    case 0x97: return 'ö';
+    case 0x98: return 'û';
+    case 0x99: return 'ü';
+    case 0x9A: return 'ñ';
+    case 0x9B: return 'ç';
+    case 0x9C: return 'ş';
+    case 0x9D: return 'ǧ';
+    case 0x9E: return 'ı';
+    case 0x9F: return 'ĳ';
+    case 0xA0: return 'ª';
+    case 0xA1: return 'α';
+    case 0xA2: return '©';
+    case 0xA3: return '‰';
+    case 0xA4: return 'Ǧ';
+    case 0xA5: return 'ě';
+    case 0xA6: return 'ň';
+    case 0xA7: return 'ő';
+    case 0xA8: return 'π';
+    case 0xA9: return '€';
+    case 0xAA: return '£';
+    case 0xAB: return '$';
+    case 0xAC: return '←';
+    case 0xAD: return '↑';
+    case 0xAE: return '→';
+    case 0xAF: return '↓';
+    case 0xB0: return 'º';
+    case 0xB1: return '¹';
+    case 0xB2: return '²';
+    case 0xB3: return '³';
+    case 0xB4: return '±';
+    case 0xB5: return 'İ';
+    case 0xB6: return 'ń';
+    case 0xB7: return 'ű';
+    case 0xB8: return 'µ';
+    case 0xB9: return '¿';
+    case 0xBA: return '÷';
+    case 0xBB: return '°';
+    case 0xBC: return '¼';
+    case 0xBD: return '½';
+    case 0xBE: return '¾';
+    case 0xBF: return '§';
+    case 0xC0: return 'Á';
+    case 0xC1: return 'À';
+    case 0xC2: return 'É';
+    case 0xC3: return 'È';
+    case 0xC4: return 'Í';
+    case 0xC5: return 'Ì';
+    case 0xC6: return 'Ó';
+    case 0xC7: return 'Ò';
+    case 0xC8: return 'Ú';
+    case 0xC9: return 'Ù';
+    case 0xCA: return 'Ř';
+    case 0xCB: return 'Č';
+    case 0xCC: return 'Š';
+    case 0xCD: return 'Ž';
+    case 0xCE: return 'Ð';
+    case 0xCF: return 'Ŀ';
+    case 0xD0: return 'Â';
+    case 0xD1: return 'Ä';
+    case 0xD2: return 'Ê';
+    case 0xD3: return 'Ë';
+    case 0xD4: return 'Î';
+    case 0xD5: return 'Ï';
+    case 0xD6: return 'Ô';
+    case 0xD7: return 'Ö';
+    case 0xD8: return 'Û';
+    case 0xD9: return 'Ü';
+    case 0xDA: return 'ř';
+    case 0xDB: return 'č';
+    case 0xDC: return 'š';
+    case 0xDD: return 'ž';
+    case 0xDE: return 'đ';
+    case 0xDF: return 'ŀ';
+    case 0xE0: return 'Ã';
+    case 0xE1: return 'Å';
+    case 0xE2: return 'Æ';
+    case 0xE3: return 'Œ';
+    case 0xE4: return 'ŷ';
+    case 0xE5: return 'Ý';
+    case 0xE6: return 'Õ';
+    case 0xE7: return 'Ø';
+    case 0xE8: return 'Þ';
+    case 0xE9: return 'Ŋ';
+    case 0xEA: return 'Ŕ';
+    case 0xEB: return 'Ć';
+    case 0xEC: return 'Ś';
+    case 0xED: return 'Ź';
+    case 0xEE: return 'Ŧ';
+    case 0xEF: return 'ð';
+    case 0xF0: return 'ã';
+    case 0xF1: return 'å';
+    case 0xF2: return 'æ';
+    case 0xF3: return 'œ';
+    case 0xF4: return 'ŵ';
+    case 0xF5: return 'ý';
+    case 0xF6: return 'õ';
+    case 0xF7: return 'ø';
+    case 0xF8: return 'þ';
+    case 0xF9: return 'ŋ';
+    case 0xFA: return 'ŕ';
+    case 0xFB: return 'ć';
+    case 0xFC: return 'ś';
+    case 0xFD: return 'ź';
+    case 0xFE: return 'ŧ';
+    case 0xFF: return ' ';
     default: break;
   }
-  return ' ';
+
+  return 0;
 }
 
 Radio::Radio(SPIClass *spi)
@@ -198,33 +195,42 @@ void Radio::update()
 
 void Radio::serviceData()
 {
-  String rdsText(m_dab->ServiceData);
+  char rdsText[256];
+  uint8_t i = 0, j = 0;
+  uint8_t rdsTextSize = strlen(m_dab->ServiceData) + 1;
+
+  memcpy(rdsText, m_dab->ServiceData, rdsTextSize);
+
+  for (i = j = 0; i < rdsTextSize; i++)
+  {
+    uint16_t newChar = rdsCharConverter(rdsText[j]);
+
+    if (newChar != 0)
+    {
+      uint8_t *newCharUtf8 = (uint8_t *)&newChar;
+
+      memmove(&rdsText[j + 1], &rdsText[j], rdsTextSize - j);
+
+      rdsText[j]     = newCharUtf8[1];
+      rdsText[j + 1] = newCharUtf8[0];
+
+      j++;
+    }
+    j++;
+  }
+  rdsText[j - 1] = '\0';
 
   Serial.println(rdsText);
-  for (uint8_t i = 0; i < rdsText.length(); i++)
+  for (uint8_t i = 0; i < strlen(rdsText); i++)
   {
     Serial.print(" 0x");
-    Serial.print(rdsText.charAt(i), HEX);
-    rdsText.setCharAt(i, rdsCharConverter(rdsText.charAt(i)));
+    Serial.print(rdsText[i], HEX);
   }
   Serial.print("\n");
 
-  Serial.println(rdsText.c_str());
-  for (uint8_t i = 0; i < rdsText.length(); i++)
+  if (m_rdsTextUpdatedCbf)
   {
-    Serial.print(" 0x");
-    Serial.print(rdsText.charAt(i), HEX);
-  }
-  Serial.print("\n");
-
-  if (!m_rdsText.equals(rdsText))
-  {
-    if (m_rdsTextUpdatedCbf)
-    {
-      Serial.println("Calling callback");
-      m_rdsTextUpdatedCbf(rdsText);
-    }
-    m_rdsText = rdsText;
+    m_rdsTextUpdatedCbf(String(rdsText));
   }
 }
 

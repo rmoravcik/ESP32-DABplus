@@ -12,6 +12,7 @@ fs::File file;
 PNG png;
 
 #define SCROLLING_TEXT_SPACING 40
+#define MAX_NOT_WRAPPED_SCROLING_TEXT_SPACING 20
 
 Display::Display()
 {
@@ -99,6 +100,35 @@ void Display::update()
     {
       m_rdsTextOffset = 0;
     }
+  }
+  else if ((m_rdsTextWidth + MAX_NOT_WRAPPED_SCROLING_TEXT_SPACING) < m_serviceDataSprite->width())
+  {  
+    if (m_rdsTextScrollLeft)
+    {
+      if (m_rdsTextOffset >= 0)
+      {
+        m_rdsTextScrollLeft = false;
+        m_rdsTextOffset = 0;
+      }
+      else
+      {
+        m_rdsTextOffset++;
+      }
+    }
+    else
+    {
+      if ((m_rdsTextWidth - m_rdsTextOffset) >= m_serviceDataSprite->width())
+      {
+        m_rdsTextScrollLeft = true;
+        m_rdsTextOffset++;
+      }
+      else
+      {
+        m_rdsTextOffset--;
+      }
+    }
+
+    drawRdsText(m_rdsText, m_rdsTextOffset);
   }
 }
 
@@ -196,13 +226,14 @@ void Display::drawSlideShow(bool logo)
 
 void Display::drawRdsText(String text)
 {
-  if (text.isEmpty())
+  if (text.isEmpty() || m_rdsText.equals(text))
   {
     return;
   }
 
   m_rdsTextOffset = 0;
   m_rdsText = text;
+  m_rdsTextScrollLeft = true;
 
   m_rdsTextWidth = drawRdsText(m_rdsText, m_rdsTextOffset);
 }

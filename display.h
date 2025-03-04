@@ -33,7 +33,8 @@ public:
 
   String m_rdsText;
   int16_t m_rdsTextWidth;
-  uint16_t m_rdsTextOffset;
+  int16_t m_rdsTextOffset;
+  bool m_rdsTextScrollLeft;
 
   int32_t drawRdsText(String text, uint16_t offset);
 
