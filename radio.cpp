@@ -9,6 +9,7 @@
 DAB *Radio::m_dab = NULL;
 static SPIClass *m_spi = NULL;
 rdsTextUpdatedType Radio::m_rdsTextUpdatedCbf = NULL;
+stationFoundType Radio::m_stationFoundCbf = NULL;
 
 uint16_t rdsCharConverter(const uint8_t ch)
 {
@@ -158,7 +159,6 @@ Radio::Radio(SPIClass *spi)
   Serial.println(F("Initializing radio"));
 
   m_spi = spi;
-  m_serviceID = 0;
 
   m_dab = new DAB();
   m_dab->setCallback(serviceData);
@@ -239,6 +239,11 @@ void Radio::setRdsTextUpdatedCallack(rdsTextUpdatedType callback)
   m_rdsTextUpdatedCbf = callback;
 }
 
+void Radio::setStationFoundCallack(stationFoundType callback)
+{
+  m_stationFoundCbf = callback;
+}
+
 void Radio::scan(void)
 {     
   uint8_t freq_index;
@@ -296,15 +301,30 @@ void Radio::ensembleInfo(void)
       Serial.print(F("\t data"));
     }
     Serial.print(F("\n"));
+
+    if (m_stationFoundCbf)
+    {
+      m_stationFoundCbf(m_dab->freq_index, m_dab->service[i].ServiceID, String(m_dab->service[i].Label));
+    }
+
   }
   Serial.print(F("\n"));
 }
 
-void Radio::tuneService(uint8_t freq, uint32_t serviceID)
+void Radio::tuneStation(uint8_t freqIndex, uint32_t serviceId)
 {
-  m_dab->tune(freq);
-  m_dab->set_service(serviceID);
-  m_serviceID = serviceID;
+  m_dab->tune(freqIndex);
+  if (m_dab->servicevalid())
+  {
+    for (uint8_t i = 0; i < m_dab->numberofservices; i++)
+    {
+      if (m_dab->service[i].ServiceID == serviceId)
+      {
+        m_dab->set_service(i);
+        break;
+      }
+    }
+  }
 }
 
 void Radio::getTime(uint8_t *hour, uint8_t *min)
@@ -316,16 +336,6 @@ void Radio::getTime(uint8_t *hour, uint8_t *min)
     *hour = dabTime.Hours;
     *min = dabTime.Minutes;
   }
-}
-
-char* Radio::getEnsamble()
-{
-  return m_dab->Ensemble;
-}
-
-char* Radio::getServiceName()
-{
-  return m_dab->service[m_serviceID].Label;
 }
 
 int8_t Radio::getSignalStrength()

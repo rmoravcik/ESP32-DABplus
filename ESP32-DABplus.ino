@@ -18,6 +18,16 @@ unsigned long lastMillis = 0;
 
 volatile bool penDown = false;
 
+struct StationInfo
+{
+  uint8_t freqIndex;
+  uint32_t serviceId;
+  String label;
+};
+
+StationInfo stationList[100];
+uint8_t stationCount = 0;
+
 void init_psram()
 {
   // Check if PSRAM is enabled
@@ -68,6 +78,14 @@ void rdsTextUpdated(String text)
   m_display->drawRdsText(text);
 }
 
+void stationFound(uint8_t freqIndex, uint32_t serviceId, String label)
+{
+  stationList[stationCount].freqIndex = freqIndex;
+  stationList[stationCount].serviceId = serviceId;
+  stationList[stationCount].label = label;
+  stationCount++;
+}
+
 void setup()
 {
   Serial.begin(115200);
@@ -82,8 +100,20 @@ void setup()
   m_display = new Display();
   m_radio = new Radio(m_display->getSPIinstance());
   m_radio->setRdsTextUpdatedCallack(rdsTextUpdated);
-  // m_radio->scan();
-  m_radio->tuneService(27, 0);
+  m_radio->setStationFoundCallack(stationFound);
+  m_radio->scan();
+
+  for (uint8_t i = 0; i < stationCount; i++)
+  {
+    // if (stationList[i].label == "Radio Relax")
+    if (i == 0)
+    {
+      Serial.println("Tunning...");
+      m_radio->tuneStation(stationList[i].freqIndex, stationList[i].serviceId);
+      m_display->drawStationLabel(stationList[i].label);
+      break;
+    }
+  }
 }
 
 void penIrq()
@@ -129,7 +159,6 @@ void loop()
     }
 
     m_display->drawSignalIndicator(m_radio->getSignalStrength());
-    m_display->drawServiceName(m_radio->getServiceName());
 
     lastMillis = curMillis;
   }

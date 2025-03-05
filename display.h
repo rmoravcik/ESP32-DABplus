@@ -18,7 +18,7 @@ public:
 
   void drawTime(uint8_t hour, uint8_t min);
   void drawSignalIndicator(int8_t strength);
-  void drawServiceName(const char *name);
+  void drawStationLabel(String label);
   void drawSlideShow(bool logo = false);
   void drawRdsText(String text);
 

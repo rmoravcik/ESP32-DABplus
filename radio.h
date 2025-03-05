@@ -7,6 +7,7 @@
 #include <SPI.h>
 
 typedef void (*rdsTextUpdatedType)(String text);
+typedef void (*stationFoundType)(uint8_t freqIndex, uint32_t serviceId, String label);
 
 class Radio
 {
@@ -16,24 +17,21 @@ public:
 
   static void serviceData();
   void setRdsTextUpdatedCallack(rdsTextUpdatedType callback);
+  void setStationFoundCallack(stationFoundType callback);
   void update();
   void scan();
 
   void getTime(uint8_t *hour, uint8_t *min);
-
-  char* getEnsamble();
-  char* getServiceName();
   int8_t getSignalStrength();
 
-  void tuneService(uint8_t freq, uint32_t serviceID);
+  void tuneStation(uint8_t freqIndex, uint32_t serviceId);
 
   static DAB *m_dab;
   static rdsTextUpdatedType m_rdsTextUpdatedCbf;
+  static stationFoundType m_stationFoundCbf;
 
  private:
   void ensembleInfo();
-
-  uint32_t m_serviceID;
 };
 
 #endif

@@ -193,16 +193,16 @@ void Display::drawSignalIndicator(int8_t strength)
   m_statusBarSprite->pushSprite(0, 0);
 }
 
-void Display::drawServiceName(const char *name)
+void Display::drawStationLabel(String label)
 {
-  if (strlen(name) == 0)
+  if (label.length() == 0)
   {
     return;
   }
 
   m_statusBarSprite->fillRect(80, 0, 240, 25, TFT_BLACK);
   m_statusBarSprite->setTextDatum(TC_DATUM);
-  m_statusBarSprite->drawString(name, 240, 5);
+  m_statusBarSprite->drawString(label, 240, 5);
   m_statusBarSprite->pushSprite(0, 0);
 }
 
