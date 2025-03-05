@@ -86,6 +86,54 @@ void stationFound(uint8_t freqIndex, uint32_t serviceId, String label)
   stationCount++;
 }
 
+void loadStationList(void)
+{
+  File file = LittleFS.open("/station_list.conf", "r");
+  if (!file)
+  {
+    Serial.println("Error opening /station_list.conf for reading");
+    return;
+  }
+
+  while (file.available())
+  {
+    String line = file.readStringUntil('\n');
+
+    if (line.length())
+    {
+      uint8_t freqIndex;
+      uint32_t serviceId;
+      char label[25];
+
+      sscanf(line.c_str(), "%u;%u;%s;", &freqIndex, &serviceId, label);
+
+      stationList[stationCount].freqIndex = freqIndex;
+      stationList[stationCount].serviceId = serviceId;
+      stationList[stationCount].label = label;
+      stationCount++;
+    }
+  }
+
+  file.close();
+}
+
+void saveStationList(void)
+{
+  File file = LittleFS.open("/station_list.conf", "w");
+  if (!file)
+  {
+    Serial.println("Error opening /station_list.conf for writing");
+    return;
+  }
+
+  for (uint8_t i = 0; i < stationCount; i++)
+  {
+    file.printf("%u;%u;%s;\n", stationList[i].freqIndex, stationList[i].serviceId, stationList[i].label.c_str());
+  }
+
+  file.close();
+}
+
 void setup()
 {
   Serial.begin(115200);
@@ -101,7 +149,10 @@ void setup()
   m_radio = new Radio(m_display->getSPIinstance());
   m_radio->setRdsTextUpdatedCallack(rdsTextUpdated);
   m_radio->setStationFoundCallack(stationFound);
-  m_radio->scan();
+
+  loadStationList();
+  // m_radio->scan();
+  // saveStationList();
 
   for (uint8_t i = 0; i < stationCount; i++)
   {
