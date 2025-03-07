@@ -220,13 +220,13 @@ void Radio::serviceData()
   }
   rdsText[j - 1] = '\0';
 
-  Serial.println(rdsText);
-  for (uint8_t i = 0; i < strlen(rdsText); i++)
-  {
-    Serial.print(" 0x");
-    Serial.print(rdsText[i], HEX);
-  }
-  Serial.print("\n");
+//  Serial.println(rdsText);
+//  for (uint8_t i = 0; i < strlen(rdsText); i++)
+//  {
+//    Serial.print(" 0x");
+//    Serial.print(rdsText[i], HEX);
+//  }
+//  Serial.print("\n");
 
   if (m_rdsTextUpdatedCbf)
   {
@@ -304,7 +304,10 @@ void Radio::ensembleInfo(void)
 
     if (m_stationFoundCbf)
     {
-      m_stationFoundCbf(m_dab->freq_index, m_dab->service[i].ServiceID, String(m_dab->service[i].Label));
+      String label = m_dab->service[i].Label;
+      label.trim();
+
+      m_stationFoundCbf(m_dab->freq_index, m_dab->service[i].ServiceID, label);
     }
 
   }

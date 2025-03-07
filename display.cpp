@@ -143,8 +143,8 @@ void Display::drawTime(uint8_t hour, uint8_t min)
 
   sprintf(time, "%2u:%02u", hour, min);
 
-  Serial.print("Time: ");
-  Serial.println(time);
+//  Serial.print("Time: ");
+//  Serial.println(time);
 
   m_statusBarSprite->fillRect(0, 0, 60, 25, TFT_BLACK);
   m_statusBarSprite->setTextDatum(TL_DATUM);

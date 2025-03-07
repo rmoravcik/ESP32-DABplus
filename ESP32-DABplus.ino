@@ -103,9 +103,28 @@ void loadStationList(void)
     {
       uint8_t freqIndex;
       uint32_t serviceId;
-      char label[25];
+      String label;
 
-      sscanf(line.c_str(), "%u;%u;%s;", &freqIndex, &serviceId, label);
+      int pos = line.indexOf(';');
+      freqIndex = line.substring(0, pos - 1).toInt();
+      line.remove(0, pos + 1);
+
+      pos = line.indexOf(';');
+      serviceId = line.substring(0, pos - 1).toInt();
+      line.remove(0, pos + 1);
+
+      pos = line.indexOf(';');
+      label = line.substring(0, pos - 1);
+      label.trim();
+
+      Serial.print("i=");
+      Serial.print(stationCount);
+      Serial.print(" ");
+      Serial.print(freqIndex);
+      Serial.print(" ");
+      Serial.print(serviceId);
+      Serial.print(" ");
+      Serial.println(label);
 
       stationList[stationCount].freqIndex = freqIndex;
       stationList[stationCount].serviceId = serviceId;
@@ -119,6 +138,11 @@ void loadStationList(void)
 
 void saveStationList(void)
 {
+  if (LittleFS.exists("/station_list.conf"))
+  {
+    LittleFS.remove("/station_list.conf");
+  }
+
   File file = LittleFS.open("/station_list.conf", "w");
   if (!file)
   {
@@ -157,9 +181,10 @@ void setup()
   for (uint8_t i = 0; i < stationCount; i++)
   {
     // if (stationList[i].label == "Radio Relax")
-    if (i == 0)
+    if (i == 50)
     {
-      Serial.println("Tunning...");
+      Serial.print("Tunning to station ");
+      Serial.println(stationList[i].label);
       m_radio->tuneStation(stationList[i].freqIndex, stationList[i].serviceId);
       m_display->drawStationLabel(stationList[i].label);
       break;
