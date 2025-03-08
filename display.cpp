@@ -14,6 +14,8 @@ PNG png;
 #define SCROLLING_TEXT_SPACING 40
 #define MAX_NOT_WRAPPED_SCROLING_TEXT_SPACING 20
 
+#define minimum(a,b)     (((a) < (b)) ? (a) : (b))
+
 Display::Display()
 {
   Serial.println("Initializing display");
@@ -200,6 +202,10 @@ void Display::drawStationLabel(String label)
     return;
   }
 
+  // Reset slideshow and rds text
+  drawSlideShow(true);
+  drawRdsText(m_welcomeText);
+
   m_statusBarSprite->fillRect(80, 0, 240, 25, TFT_BLACK);
   m_statusBarSprite->setTextDatum(TC_DATUM);
   m_statusBarSprite->drawString(label, 240, 5);
@@ -210,15 +216,19 @@ void Display::drawSlideShow(bool logo)
 {
   if (logo)
   {
-    int ret = png.open((const char *)"/dab_logo.png", pngOpen, pngClose, pngRead, pngSeek, pngDraw);
-    if (ret == PNG_SUCCESS)
-    {
-      ret = png.decode(NULL, 0);
-      png.close();
-    }
+    renderPng((const char *)"/dab_logo.png");
   }
   else
   {
+    if (isJpegFile())
+    {
+      // renderJpeg((const char *)"/DPR_11D_12192_0.jpg");
+      renderJpeg((const char *)"/slideshow.img");
+    } 
+    else 
+    {
+      renderPng((const char *)"/slideshow.img");
+    }
 
   }
 //  m_slideshowSprite->pushSprite(80, 30);
@@ -260,6 +270,142 @@ int32_t Display::drawRdsText(String text, uint16_t offset)
   m_serviceDataSprite->pushSprite(80, 280);
 
   return rdsTextWidth;
+}
+
+bool Display::isJpegFile()
+{
+  File file;
+  size_t bytesRead;
+  byte header[8];
+
+  file = LittleFS.open("/slideshow.img", "r");
+  bytesRead = file.read(header, sizeof(header));
+  file.close();
+  
+  if ((header[0] == 0xFF) && (header[1] == 0xD8) && (header[2] == 0xFF))
+  {
+    return true;
+  }
+
+  return false;
+}
+
+void Display::renderPng(const char *filename)
+{
+    int ret = png.open(filename, pngOpen, pngClose, pngRead, pngSeek, pngDraw);
+    if (ret == PNG_SUCCESS)
+    {
+      ret = png.decode(NULL, 0);
+    }
+    png.close();
+}
+
+void Display::renderJpeg(const char *filename)
+{
+  file = LittleFS.open(filename, "rb");
+  bool decoded = JpegDec.decodeFsFile(file);
+  if (!decoded)
+  {
+    Serial.println("ERROR: JPEG decoding!");
+    file.close();
+    return;
+  }
+
+  jpegInfo();
+
+  int xpos = 80;
+  int ypos = 25;
+
+  uint16_t *pImg;
+  uint16_t mcu_w = JpegDec.MCUWidth;
+  uint16_t mcu_h = JpegDec.MCUHeight;
+  uint32_t max_x = JpegDec.width;
+  uint32_t max_y = JpegDec.height;
+
+  bool swapBytes = m_tft->getSwapBytes();
+  m_tft->setSwapBytes(true);
+  
+  // Jpeg images are draw as a set of image block (tiles) called Minimum Coding Units (MCUs)
+  // Typically these MCUs are 16x16 pixel blocks
+  // Determine the width and height of the right and bottom edge image blocks
+  uint32_t min_w = jpg_min(mcu_w, max_x % mcu_w);
+  uint32_t min_h = jpg_min(mcu_h, max_y % mcu_h);
+    
+  // save the current image block size
+  uint32_t win_w = mcu_w;
+  uint32_t win_h = mcu_h;
+  
+  // save the coordinate of the right and bottom edges to assist image cropping
+  // to the screen size
+  max_x += xpos;
+  max_y += ypos;
+
+  // Fetch data from the file, decode and display
+  while (JpegDec.read()) {    // While there is more data in the file
+    pImg = JpegDec.pImage ;   // Decode a MCU (Minimum Coding Unit, typically a 8x8 or 16x16 pixel block)
+
+    // Calculate coordinates of top left corner of current MCU
+    int mcu_x = JpegDec.MCUx * mcu_w + xpos;
+    int mcu_y = JpegDec.MCUy * mcu_h + ypos;
+
+    // check if the image block size needs to be changed for the right edge
+    if (mcu_x + mcu_w <= max_x) win_w = mcu_w;
+    else win_w = min_w;
+
+    // check if the image block size needs to be changed for the bottom edge
+    if (mcu_y + mcu_h <= max_y) win_h = mcu_h;
+    else win_h = min_h;
+
+    // copy pixels into a contiguous block
+    if (win_w != mcu_w)
+    {
+      uint16_t *cImg;
+      int p = 0;
+      cImg = pImg + win_w;
+      for (int h = 1; h < win_h; h++)
+      {
+        p += mcu_w;
+        for (int w = 0; w < win_w; w++)
+        {
+          *cImg = *(pImg + w + p);
+          cImg++;
+        }
+      }
+    }
+
+    // calculate how many pixels must be drawn
+    uint32_t mcu_pixels = win_w * win_h;
+
+    Serial.printf("%u %u %u %u\n", mcu_x, mcu_y, win_w, win_h);
+
+    // draw image MCU block only if it will fit on the screen
+    if (( mcu_x + win_w ) <= m_tft->width() && ( mcu_y + win_h ) <= m_tft->height())
+    {
+      m_tft->pushImage(mcu_x, mcu_y, win_w, win_h, pImg);
+    }
+    else if ( (mcu_y + win_h) >= m_tft->height())
+      JpegDec.abort(); // Image has run off bottom of screen so abort decoding
+  }
+  
+  m_tft->setSwapBytes(swapBytes);
+
+  file.close();
+}
+
+void Display::jpegInfo()
+{
+  Serial.println(F("==============="));
+  Serial.println(F("JPEG image info"));
+  Serial.println(F("==============="));
+  Serial.print(F(  "Width      :")); Serial.println(JpegDec.width);
+  Serial.print(F(  "Height     :")); Serial.println(JpegDec.height);
+  Serial.print(F(  "Components :")); Serial.println(JpegDec.comps);
+  Serial.print(F(  "MCU / row  :")); Serial.println(JpegDec.MCUSPerRow);
+  Serial.print(F(  "MCU / col  :")); Serial.println(JpegDec.MCUSPerCol);
+  Serial.print(F(  "Scan type  :")); Serial.println(JpegDec.scanType);
+  Serial.print(F(  "MCU width  :")); Serial.println(JpegDec.MCUWidth);
+  Serial.print(F(  "MCU height :")); Serial.println(JpegDec.MCUHeight);
+  Serial.println(F("==============="));
 }
 
 void* Display::pngOpen(const char *filename, int32_t *size)

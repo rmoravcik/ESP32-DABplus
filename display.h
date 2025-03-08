@@ -1,9 +1,10 @@
 #ifndef DISPLAY_H
 #define DISPLAY_H
 
-#include <PNGdec.h>
-#include <TFT_eSPI.h>
 #include <Arduino.h>
+#include <TFT_eSPI.h>
+#include <JPEGDecoder.h>
+#include <PNGdec.h>
 
 class Display
 {
@@ -37,6 +38,12 @@ public:
   bool m_rdsTextScrollLeft;
 
   int32_t drawRdsText(String text, uint16_t offset);
+
+  bool isJpegFile();
+  void renderPng(const char *filename);
+  void renderJpeg(const char *filename);
+  
+  void jpegInfo();
 
   static void* pngOpen(const char *filename, int32_t *size);
   static void pngClose(void *handle);

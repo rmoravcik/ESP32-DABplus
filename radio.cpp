@@ -9,6 +9,7 @@
 DAB *Radio::m_dab = NULL;
 static SPIClass *m_spi = NULL;
 rdsTextUpdatedType Radio::m_rdsTextUpdatedCbf = NULL;
+slideShowUpdatedType Radio::m_slideShowUpdatedCbf = NULL;
 stationFoundType Radio::m_stationFoundCbf = NULL;
 
 uint16_t rdsCharConverter(const uint8_t ch)
@@ -232,14 +233,27 @@ void Radio::serviceData()
   {
     m_rdsTextUpdatedCbf(String(rdsText));
   }
+
+  if (m_dab->slideshowvalid())
+  {
+    if (m_slideShowUpdatedCbf)
+    {
+      m_slideShowUpdatedCbf();
+    }
+  }
 }
 
-void Radio::setRdsTextUpdatedCallack(rdsTextUpdatedType callback)
+void Radio::setRdsTextUpdatedCallback(rdsTextUpdatedType callback)
 {
   m_rdsTextUpdatedCbf = callback;
 }
 
-void Radio::setStationFoundCallack(stationFoundType callback)
+void Radio::setSlideShowUpdatedCallback(slideShowUpdatedType callback)
+{
+  m_slideShowUpdatedCbf = callback;
+}
+
+void Radio::setStationFoundCallback(stationFoundType callback)
 {
   m_stationFoundCbf = callback;
 }

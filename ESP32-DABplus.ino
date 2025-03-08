@@ -1,5 +1,6 @@
 #include <stdint.h>
 #include <LittleFS.h>
+#include <Preferences.h>
 
 #include "bt_audio.h"
 #include "bt_scanner.h"
@@ -27,6 +28,9 @@ struct StationInfo
 
 StationInfo stationList[100];
 uint8_t stationCount = 0;
+uint8_t currentStation = 0;
+
+Preferences preferences;
 
 void init_psram()
 {
@@ -78,6 +82,11 @@ void rdsTextUpdated(String text)
   m_display->drawRdsText(text);
 }
 
+void slideShowUpdated(void)
+{
+  m_display->drawSlideShow();
+}
+
 void stationFound(uint8_t freqIndex, uint32_t serviceId, String label)
 {
   stationList[stationCount].freqIndex = freqIndex;
@@ -106,25 +115,16 @@ void loadStationList(void)
       String label;
 
       int pos = line.indexOf(';');
-      freqIndex = line.substring(0, pos - 1).toInt();
+      freqIndex = line.substring(0, pos).toInt();
       line.remove(0, pos + 1);
 
       pos = line.indexOf(';');
-      serviceId = line.substring(0, pos - 1).toInt();
+      serviceId = line.substring(0, pos).toInt();
       line.remove(0, pos + 1);
 
       pos = line.indexOf(';');
-      label = line.substring(0, pos - 1);
+      label = line.substring(0, pos);
       label.trim();
-
-      Serial.print("i=");
-      Serial.print(stationCount);
-      Serial.print(" ");
-      Serial.print(freqIndex);
-      Serial.print(" ");
-      Serial.print(serviceId);
-      Serial.print(" ");
-      Serial.println(label);
 
       stationList[stationCount].freqIndex = freqIndex;
       stationList[stationCount].serviceId = serviceId;
@@ -158,6 +158,14 @@ void saveStationList(void)
   file.close();
 }
 
+void tuneStation(uint8_t index)
+{
+  Serial.print("Tunning to station ");
+  Serial.println(stationList[index].label);
+  m_radio->tuneStation(stationList[index].freqIndex, stationList[index].serviceId);
+  m_display->drawStationLabel(stationList[index].label);
+}
+
 void setup()
 {
   Serial.begin(115200);
@@ -171,25 +179,26 @@ void setup()
   m_btaudio = new BtAudio(m_btscanner);
   m_display = new Display();
   m_radio = new Radio(m_display->getSPIinstance());
-  m_radio->setRdsTextUpdatedCallack(rdsTextUpdated);
-  m_radio->setStationFoundCallack(stationFound);
+  m_radio->setRdsTextUpdatedCallback(rdsTextUpdated);
+  m_radio->setSlideShowUpdatedCallback(slideShowUpdated);
+  m_radio->setStationFoundCallback(stationFound);
 
   loadStationList();
+
+  preferences.begin("ESP32-DABplus", false);
+  currentStation = preferences.getUChar("currentStation", 0);
+
+  Serial.print("currentStation=");
+  Serial.println(currentStation);
+  if (currentStation >= stationCount)
+  {
+    currentStation = 0;
+  }
+  currentStation = 25;
   // m_radio->scan();
   // saveStationList();
 
-  for (uint8_t i = 0; i < stationCount; i++)
-  {
-    // if (stationList[i].label == "Radio Relax")
-    if (i == 50)
-    {
-      Serial.print("Tunning to station ");
-      Serial.println(stationList[i].label);
-      m_radio->tuneStation(stationList[i].freqIndex, stationList[i].serviceId);
-      m_display->drawStationLabel(stationList[i].label);
-      break;
-    }
-  }
+  tuneStation(currentStation);
 }
 
 void penIrq()
@@ -216,11 +225,22 @@ void loop()
 
     m_display->getTouch(&x, &y);
 
-    Serial.print("x=");
-    Serial.print(x);
-    Serial.print(" y=");
-    Serial.println(y);
+    if (((x > 0) && (x < 80)) && ((y > 25) && (y < 265)))
+    {
+      if (currentStation > 0)
+        currentStation--;
+    }
 
+    if (((x > 400) && (x < 480)) && ((y > 25) && (y < 265)))
+    {
+      if (currentStation < (stationCount - 2))
+      {
+        currentStation++;
+      }
+    }
+
+    tuneStation(currentStation);
+    preferences.putUChar("currentStation", currentStation);
     penDown = false;
   }
 
