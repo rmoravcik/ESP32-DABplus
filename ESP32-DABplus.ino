@@ -183,6 +183,9 @@ void setup()
   m_radio->setSlideShowUpdatedCallback(slideShowUpdated);
   m_radio->setStationFoundCallback(stationFound);
 
+  // m_radio->scan();
+  // saveStationList();
+
   loadStationList();
 
   preferences.begin("ESP32-DABplus", false);
@@ -194,9 +197,6 @@ void setup()
   {
     currentStation = 0;
   }
-  currentStation = 25;
-  // m_radio->scan();
-  // saveStationList();
 
   tuneStation(currentStation);
 }

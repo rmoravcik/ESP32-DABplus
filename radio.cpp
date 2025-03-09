@@ -196,42 +196,45 @@ void Radio::update()
 
 void Radio::serviceData()
 {
-  char rdsText[256];
-  uint8_t i = 0, j = 0;
-  uint8_t rdsTextSize = strlen(m_dab->ServiceData) + 1;
-
-  memcpy(rdsText, m_dab->ServiceData, rdsTextSize);
-
-  for (i = j = 0; i < rdsTextSize; i++)
+  if (m_dab->rdstextvalid())
   {
-    uint16_t newChar = rdsCharConverter(rdsText[j]);
+    char rdsText[256];
+    uint8_t i = 0, j = 0;
+    uint8_t rdsTextLen = strlen(m_dab->ServiceData);
 
-    if (newChar != 0)
+    for (i = j = 0; i < rdsTextLen; i++)
     {
-      uint8_t *newCharUtf8 = (uint8_t *)&newChar;
+      uint16_t newChar = rdsCharConverter(m_dab->ServiceData[i]);
 
-      memmove(&rdsText[j + 1], &rdsText[j], rdsTextSize - j);
+      if (newChar != 0)
+      {
+        uint8_t *newCharUtf8 = (uint8_t *)&newChar;
 
-      rdsText[j]     = newCharUtf8[1];
-      rdsText[j + 1] = newCharUtf8[0];
+        rdsText[j]     = newCharUtf8[1];
+        rdsText[j + 1] = newCharUtf8[0];
 
+        j++;
+      }
+      else
+      {
+        rdsText[j] = m_dab->ServiceData[i];
+      }
       j++;
     }
-    j++;
-  }
-  rdsText[j - 1] = '\0';
+    rdsText[j] = '\0';
 
-//  Serial.println(rdsText);
-//  for (uint8_t i = 0; i < strlen(rdsText); i++)
-//  {
-//    Serial.print(" 0x");
-//    Serial.print(rdsText[i], HEX);
-//  }
-//  Serial.print("\n");
+//    Serial.println(rdsText);
+//    for (uint8_t i = 0; i < strlen(rdsText); i++)
+//    {
+//      Serial.print(" 0x");
+//      Serial.print(rdsText[i], HEX);
+//    }
+//    Serial.print("\n");
 
-  if (m_rdsTextUpdatedCbf)
-  {
-    m_rdsTextUpdatedCbf(String(rdsText));
+    if (m_rdsTextUpdatedCbf)
+    {
+      m_rdsTextUpdatedCbf(String(rdsText));
+    }
   }
 
   if (m_dab->slideshowvalid())

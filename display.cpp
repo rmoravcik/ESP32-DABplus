@@ -311,16 +311,15 @@ void Display::renderJpeg(const char *filename)
     return;
   }
 
-  jpegInfo();
-
-  int xpos = 80;
-  int ypos = 25;
+//  jpegInfo();
 
   uint16_t *pImg;
   uint16_t mcu_w = JpegDec.MCUWidth;
   uint16_t mcu_h = JpegDec.MCUHeight;
   uint32_t max_x = JpegDec.width;
   uint32_t max_y = JpegDec.height;
+  int xpos = 80;
+  int ypos = 25;
 
   bool swapBytes = m_tft->getSwapBytes();
   m_tft->setSwapBytes(true);
@@ -375,8 +374,6 @@ void Display::renderJpeg(const char *filename)
 
     // calculate how many pixels must be drawn
     uint32_t mcu_pixels = win_w * win_h;
-
-    Serial.printf("%u %u %u %u\n", mcu_x, mcu_y, win_w, win_h);
 
     // draw image MCU block only if it will fit on the screen
     if (( mcu_x + win_w ) <= m_tft->width() && ( mcu_y + win_h ) <= m_tft->height())
