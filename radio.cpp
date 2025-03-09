@@ -321,7 +321,31 @@ void Radio::ensembleInfo(void)
 
     if (m_stationFoundCbf)
     {
-      String label = m_dab->service[i].Label;
+      char Label[34];
+      uint8_t j = 0, k = 0;
+
+      for (j = k = 0; j < sizeof(m_dab->service[i].Label); j++)
+      {
+        uint16_t newChar = rdsCharConverter(m_dab->service[i].Label[j]);
+
+        if (newChar != 0)
+        {
+          uint8_t *newCharUtf8 = (uint8_t *)&newChar;
+
+          Label[k]     = newCharUtf8[1];
+          Label[k + 1] = newCharUtf8[0];
+
+          k++;
+        }
+        else
+        {
+          Label[k] = m_dab->service[i].Label[j];
+        }
+        k++;
+      }
+      Label[k] = '\0';
+
+      String label = Label;
       label.trim();
 
       m_stationFoundCbf(m_dab->freq_index, m_dab->service[i].ServiceID, label);
