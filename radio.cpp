@@ -348,27 +348,16 @@ void Radio::ensembleInfo(void)
       String label = Label;
       label.trim();
 
-      m_stationFoundCbf(m_dab->freq_index, m_dab->service[i].ServiceID, label);
+      m_stationFoundCbf(m_dab->freq_index, m_dab->service[i].ServiceID, m_dab->service[i].CompID, label);
     }
 
   }
   Serial.print(F("\n"));
 }
 
-void Radio::tuneStation(uint8_t freqIndex, uint32_t serviceId)
+void Radio::tuneStation(uint8_t freqIndex, uint32_t serviceId, uint32_t compId)
 {
-  m_dab->tune(freqIndex);
-  if (m_dab->servicevalid())
-  {
-    for (uint8_t i = 0; i < m_dab->numberofservices; i++)
-    {
-      if (m_dab->service[i].ServiceID == serviceId)
-      {
-        m_dab->set_service(i);
-        break;
-      }
-    }
-  }
+  m_dab->tuneservice(freqIndex, serviceId, compId);
 }
 
 void Radio::getTime(uint8_t *hour, uint8_t *min)

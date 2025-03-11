@@ -17,12 +17,11 @@ Radio *m_radio = NULL;
 uint8_t lastMin = -1;
 unsigned long lastMillis = 0;
 
-volatile bool penDown = false;
-
 struct StationInfo
 {
   uint8_t freqIndex;
   uint32_t serviceId;
+  uint32_t compId;
   String label;
 };
 
@@ -74,7 +73,6 @@ void init_gpio()
   digitalWrite(GPIO_SI468X_SSBNV, HIGH);
 
   pinMode(GPIO_TOUCH_IRQ, INPUT_PULLUP);
-  attachInterrupt(digitalPinToInterrupt(GPIO_TOUCH_IRQ), penIrq, FALLING);
 }
 
 void rdsTextUpdated(String text)
@@ -87,10 +85,11 @@ void slideShowUpdated(void)
   m_display->drawSlideShow();
 }
 
-void stationFound(uint8_t freqIndex, uint32_t serviceId, String label)
+void stationFound(uint8_t freqIndex, uint32_t serviceId, uint32_t compId, String label)
 {
   stationList[stationCount].freqIndex = freqIndex;
   stationList[stationCount].serviceId = serviceId;
+  stationList[stationCount].compId = compId;
   stationList[stationCount].label = label;
   stationCount++;
 }
@@ -112,6 +111,7 @@ void loadStationList(void)
     {
       uint8_t freqIndex;
       uint32_t serviceId;
+      uint32_t compId;
       String label;
 
       int pos = line.indexOf(';');
@@ -123,11 +123,16 @@ void loadStationList(void)
       line.remove(0, pos + 1);
 
       pos = line.indexOf(';');
+      compId = line.substring(0, pos).toInt();
+      line.remove(0, pos + 1);
+
+      pos = line.indexOf(';');
       label = line.substring(0, pos);
       label.trim();
 
       stationList[stationCount].freqIndex = freqIndex;
       stationList[stationCount].serviceId = serviceId;
+      stationList[stationCount].compId = compId;
       stationList[stationCount].label = label;
       stationCount++;
     }
@@ -152,7 +157,7 @@ void saveStationList(void)
 
   for (uint8_t i = 0; i < stationCount; i++)
   {
-    file.printf("%u;%u;%s;\n", stationList[i].freqIndex, stationList[i].serviceId, stationList[i].label.c_str());
+    file.printf("%u;%u;%u;%s;\n", stationList[i].freqIndex, stationList[i].serviceId, stationList[i].compId, stationList[i].label.c_str());
   }
 
   file.close();
@@ -163,7 +168,7 @@ void tuneStation(uint8_t index)
   Serial.print("Tunning to station ");
   Serial.println(stationList[index].label);
   m_display->drawStationLabel(stationList[index].label);
-  m_radio->tuneStation(stationList[index].freqIndex, stationList[index].serviceId);
+  m_radio->tuneStation(stationList[index].freqIndex, stationList[index].serviceId, stationList[index].compId);
 }
 
 void setup()
@@ -185,14 +190,13 @@ void setup()
 
   // m_radio->scan();
   // saveStationList();
+  // while (1) {}
 
   loadStationList();
 
   preferences.begin("ESP32-DABplus", false);
   currentStation = preferences.getUChar("currentStation", 0);
 
-  Serial.print("currentStation=");
-  Serial.println(currentStation);
   if (currentStation >= stationCount)
   {
     currentStation = 0;
@@ -201,15 +205,12 @@ void setup()
   tuneStation(currentStation);
 }
 
-void penIrq()
-{
-  penDown = true;
-}
-
 void loop()
 {
   uint8_t hour = 0, min = lastMin;
   unsigned long curMillis = millis();
+  uint16_t x;
+  uint16_t y;
 
   m_btaudio->update();
   m_btscanner->update();
@@ -218,31 +219,31 @@ void loop()
 
   // m_btscanner->printAvailable();
 
-  if (penDown)
+  if (m_display->getTouch(&x, &y))
   {
-    uint16_t x;
-    uint16_t y;
-
-    m_display->getTouch(&x, &y);
-    Serial.printf("x=%u y=%u\n", x, y);
-
-    if (((x > 0) && (x < 80)) && ((y > 25) && (y < 265)))
+    if (((x > 0) && (x < 80)) && ((y > 120) && (y < 200)))
     {
       if (currentStation > 0)
-        currentStation--;
-    }
-
-    if (((x > 400) && (x < 480)) && ((y > 25) && (y < 265)))
-    {
-      if (currentStation < (stationCount - 2))
       {
-        currentStation++;
+
+        currentStation--;
+      }
+      else
+      {
+        currentStation = stationCount - 1;
+      }
+    }
+    else if (((x > 400) && (x < 480)) && ((y > 120) && (y < 200)))
+    {
+      currentStation++;
+      if (currentStation >= stationCount)
+      {
+        currentStation = 0;
       }
     }
 
     tuneStation(currentStation);
     preferences.putUChar("currentStation", currentStation);
-    penDown = false;
   }
 
   // one second jobs

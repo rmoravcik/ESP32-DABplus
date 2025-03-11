@@ -8,7 +8,7 @@
 
 typedef void (*rdsTextUpdatedType)(String text);
 typedef void (*slideShowUpdatedType)(void);
-typedef void (*stationFoundType)(uint8_t freqIndex, uint32_t serviceId, String label);
+typedef void (*stationFoundType)(uint8_t freqIndex, uint32_t serviceId, uint32_t compId, String label);
 
 class Radio
 {
@@ -26,7 +26,7 @@ public:
   void getTime(uint8_t *hour, uint8_t *min);
   int8_t getSignalStrength();
 
-  void tuneStation(uint8_t freqIndex, uint32_t serviceId);
+  void tuneStation(uint8_t freqIndex, uint32_t serviceId, uint32_t compId);
 
   static DAB *m_dab;
   static rdsTextUpdatedType m_rdsTextUpdatedCbf;

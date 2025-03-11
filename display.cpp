@@ -48,9 +48,6 @@ Display::Display()
   m_statusBarSprite->setTextSize(1);
   m_statusBarSprite->loadFont("Roboto-Regular15", LittleFS);
 
-//  m_slideshowSprite = new TFT_eSprite(m_tft);
-//  m_slideshowSprite->createSprite(320, 240);
-
   m_serviceDataSprite = new TFT_eSprite(m_tft);
   m_serviceDataSprite->createSprite(320, 30);
   m_serviceDataSprite->setTextColor(TFT_WHITE, TFT_BLACK);
@@ -58,25 +55,6 @@ Display::Display()
   m_serviceDataSprite->setColorDepth(8);
   m_serviceDataSprite->setScrollRect(0, 0, 320, 30);
   m_serviceDataSprite->loadFont("Roboto-Regular20", LittleFS);
-
-#if 0
-  m_tft->fillScreen((0xFFFF));
-  m_tft->setCursor(20, 0, 2);
-  m_tft->setTextColor(TFT_BLACK, TFT_WHITE);  m_tft->setTextSize(1);
-  m_tft->println("calibration run");
-
-  m_tft->calibrateTouch(m_calibrationData, TFT_WHITE, TFT_RED, 15);
-  Serial.print("m_calibrationData: ");
-  Serial.print(m_calibrationData[0]);
-  Serial.print(" ");
-  Serial.print(m_calibrationData[1]);
-  Serial.print(" ");
-  Serial.print(m_calibrationData[2]);
-  Serial.print(" ");
-  Serial.print(m_calibrationData[3]);
-  Serial.print(" ");
-  Serial.println(m_calibrationData[4]);
-#endif
 
   drawTime(12, 0);
   drawSlideShow(true);
@@ -90,12 +68,14 @@ Display::~Display()
 
 }
 
-void Display::getTouch(uint16_t *x, uint16_t *y)
+bool Display::getTouch(uint16_t *x, uint16_t *y)
 {
   if (m_tft)
   {
-    m_tft->getTouch(x, y);
+    return m_tft->getTouch(x, y, 300);
   }
+
+  return false;
 }
 
 void Display::update()
@@ -227,7 +207,6 @@ void Display::drawSlideShow(bool logo)
   {
     if (isJpegFile())
     {
-      // renderJpeg((const char *)"/DPR_11D_12192_0.jpg");
       renderJpeg((const char *)"/slideshow.img");
     } 
     else 
@@ -236,7 +215,6 @@ void Display::drawSlideShow(bool logo)
     }
 
   }
-//  m_slideshowSprite->pushSprite(80, 30);
 }
 
 void Display::drawRdsText(String text)
@@ -290,9 +268,9 @@ void Display::drawControls()
   m_tft->fillRect(451, 147, 3, 26, TFT_WHITE);
 
   // menu
-  m_tft->fillRect(27, 40, 25, 3, TFT_WHITE);
-  m_tft->fillRect(27, 48, 25, 3, TFT_WHITE);
-  m_tft->fillRect(27, 56, 25, 3, TFT_WHITE);
+  m_tft->fillRect(27, 50, 25, 3, TFT_WHITE);
+  m_tft->fillRect(27, 58, 25, 3, TFT_WHITE);
+  m_tft->fillRect(27, 66, 25, 3, TFT_WHITE);
 }
 
 bool Display::isJpegFile()

@@ -15,7 +15,7 @@ public:
   void update();
   SPIClass* getSPIinstance();
 
-  void getTouch(uint16_t *x, uint16_t *y);
+  bool getTouch(uint16_t *x, uint16_t *y);
 
   void drawTime(uint8_t hour, uint8_t min);
   void drawSignalIndicator(int8_t strength);
