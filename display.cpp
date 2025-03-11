@@ -144,6 +144,8 @@ void Display::drawSignalIndicator(int8_t strength)
   uint16_t x = 451, y = 14;
   uint8_t level = 0; // 0..5
 
+//  Serial.printf("strength=%d\n", strength);
+
   if (strength < 10)
   {
     level = 1;

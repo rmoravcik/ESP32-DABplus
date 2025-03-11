@@ -374,7 +374,7 @@ void Radio::getTime(uint8_t *hour, uint8_t *min)
 int8_t Radio::getSignalStrength()
 {
   m_dab->status();
-  return m_dab->signalstrength;
+  return (m_dab->signalstrength * m_dab->quality) / 100;
 }
 
 void DABSpiMsg(unsigned char *data, uint32_t len)
