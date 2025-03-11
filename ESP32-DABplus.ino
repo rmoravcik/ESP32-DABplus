@@ -162,8 +162,8 @@ void tuneStation(uint8_t index)
 {
   Serial.print("Tunning to station ");
   Serial.println(stationList[index].label);
-  m_radio->tuneStation(stationList[index].freqIndex, stationList[index].serviceId);
   m_display->drawStationLabel(stationList[index].label);
+  m_radio->tuneStation(stationList[index].freqIndex, stationList[index].serviceId);
 }
 
 void setup()
@@ -224,6 +224,7 @@ void loop()
     uint16_t y;
 
     m_display->getTouch(&x, &y);
+    Serial.printf("x=%u y=%u\n", x, y);
 
     if (((x > 0) && (x < 80)) && ((y > 25) && (y < 265)))
     {

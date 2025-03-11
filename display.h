@@ -39,6 +39,8 @@ public:
 
   int32_t drawRdsText(String text, uint16_t offset);
 
+  void drawControls();
+
   bool isJpegFile();
   void renderPng(const char *filename);
   void renderJpeg(const char *filename);

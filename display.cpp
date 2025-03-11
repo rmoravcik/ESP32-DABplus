@@ -14,6 +14,8 @@ PNG png;
 #define SCROLLING_TEXT_SPACING 40
 #define MAX_NOT_WRAPPED_SCROLING_TEXT_SPACING 20
 
+#define STATUS_BAR_BG_COLOR 0x2104
+
 #define minimum(a,b)     (((a) < (b)) ? (a) : (b))
 
 Display::Display()
@@ -40,7 +42,9 @@ Display::Display()
 
   m_statusBarSprite = new TFT_eSprite(m_tft);
   m_statusBarSprite->createSprite(480, 25);
-  m_statusBarSprite->setTextColor(TFT_WHITE, TFT_BLACK);
+  m_statusBarSprite->setColorDepth(16);
+  m_statusBarSprite->fillSprite(STATUS_BAR_BG_COLOR);
+  m_statusBarSprite->setTextColor(TFT_WHITE, STATUS_BAR_BG_COLOR);
   m_statusBarSprite->setTextSize(1);
   m_statusBarSprite->loadFont("Roboto-Regular15", LittleFS);
 
@@ -78,6 +82,7 @@ Display::Display()
   drawSlideShow(true);
   drawRdsText(m_welcomeText);
   drawSignalIndicator(0);
+  drawControls();
 }
 
 Display::~Display()
@@ -148,15 +153,15 @@ void Display::drawTime(uint8_t hour, uint8_t min)
 //  Serial.print("Time: ");
 //  Serial.println(time);
 
-  m_statusBarSprite->fillRect(0, 0, 60, 25, TFT_BLACK);
+  m_statusBarSprite->fillRect(0, 0, 60, 25, STATUS_BAR_BG_COLOR);
   m_statusBarSprite->setTextDatum(TL_DATUM);
-  m_statusBarSprite->drawString(time, 5, 5);
+  m_statusBarSprite->drawString(time, 5, 6);
   m_statusBarSprite->pushSprite(0, 0);
 }
 
 void Display::drawSignalIndicator(int8_t strength)
 {
-  uint16_t x = 451, y = 13;
+  uint16_t x = 451, y = 14;
   uint8_t level = 0; // 0..5
 
   if (strength < 10)
@@ -206,9 +211,9 @@ void Display::drawStationLabel(String label)
   drawSlideShow(true);
   drawRdsText(m_welcomeText);
 
-  m_statusBarSprite->fillRect(80, 0, 240, 25, TFT_BLACK);
+  m_statusBarSprite->fillRect(80, 0, 240, 25, STATUS_BAR_BG_COLOR);
   m_statusBarSprite->setTextDatum(TC_DATUM);
-  m_statusBarSprite->drawString(label, 240, 5);
+  m_statusBarSprite->drawString(label, 240, 6);
   m_statusBarSprite->pushSprite(0, 0);
 }
 
@@ -258,7 +263,7 @@ int32_t Display::drawRdsText(String text, uint16_t offset)
   
   rdsTextWidth = m_serviceDataSprite->textWidth(text.c_str());
 
-  m_serviceDataSprite->setCursor(0 - offset, 5);
+  m_serviceDataSprite->setCursor(0 - offset, 4);
   m_serviceDataSprite->print(text.c_str());
 
   if (rdsTextWidth > m_serviceDataSprite->width())
@@ -267,9 +272,27 @@ int32_t Display::drawRdsText(String text, uint16_t offset)
     m_serviceDataSprite->print(text.c_str());
   }
   
-  m_serviceDataSprite->pushSprite(80, 280);
+  m_serviceDataSprite->pushSprite(80, 290);
 
   return rdsTextWidth;
+}
+
+void Display::drawControls()
+{
+  // previous station
+  m_tft->drawCircle(40, 160, 30, TFT_WHITE);
+  m_tft->fillTriangle(30, 160, 52, 147, 52, 173, TFT_WHITE);
+  m_tft->fillRect(27, 147, 3, 26, TFT_WHITE);
+
+  // next station
+  m_tft->drawCircle(440, 160, 30, TFT_WHITE);
+  m_tft->fillTriangle(450, 160, 428, 147, 428, 173, TFT_WHITE);
+  m_tft->fillRect(451, 147, 3, 26, TFT_WHITE);
+
+  // menu
+  m_tft->fillRect(27, 40, 25, 3, TFT_WHITE);
+  m_tft->fillRect(27, 48, 25, 3, TFT_WHITE);
+  m_tft->fillRect(27, 56, 25, 3, TFT_WHITE);
 }
 
 bool Display::isJpegFile()
@@ -319,7 +342,7 @@ void Display::renderJpeg(const char *filename)
   uint32_t max_x = JpegDec.width;
   uint32_t max_y = JpegDec.height;
   int xpos = 80;
-  int ypos = 25;
+  int ypos = 40;
 
   bool swapBytes = m_tft->getSwapBytes();
   m_tft->setSwapBytes(true);
@@ -451,5 +474,5 @@ void Display::pngDraw(PNGDRAW *pDraw)
   uint16_t usPixels[320];
 
   png.getLineAsRGB565(pDraw, usPixels, PNG_RGB565_BIG_ENDIAN, 0xffffffff);
-  m_tft->pushImage(80, 25 + pDraw->y, pDraw->iWidth, 1, usPixels);
+  m_tft->pushImage(80, 40 + pDraw->y, pDraw->iWidth, 1, usPixels);
 }
