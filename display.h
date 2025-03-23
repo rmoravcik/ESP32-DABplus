@@ -18,6 +18,7 @@ public:
   bool getTouch(uint16_t *x, uint16_t *y);
 
   void drawReceivingScreen();
+  void drawScanningScreen(uint8_t progress, uint8_t stations);
 
   void drawTime(uint8_t hour, uint8_t min);
   void drawSignalIndicator(int8_t strength);

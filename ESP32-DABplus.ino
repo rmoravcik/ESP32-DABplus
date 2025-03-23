@@ -96,6 +96,8 @@ void stationFound(uint8_t freqIndex, uint32_t serviceId, uint32_t compId, String
   stationList[stationCount].compId = compId;
   stationList[stationCount].label = label;
   stationCount++;
+
+  m_display->drawScanningScreen(freqIndex * 100/DAB_FREQS, stationCount);
 }
 
 void loadStationList(void)
@@ -291,7 +293,7 @@ void state_main_menu()
       else if ((y > 160) && (y < 230))
       {
         // volume down
-        if ((x > 295) && (x < 345))
+        if ((x > 300) && (x < 350))
         {
           if (volume > 0)
           {
@@ -300,7 +302,7 @@ void state_main_menu()
             preferences.putUChar("volume", volume);
           }
         }
-        // volume down
+        // volume up
         else if ((x > 370) && (x < 420))
         {
           if (volume < 63)
@@ -324,8 +326,13 @@ void state_main_menu()
 void state_scanning()
 {
   stationCount = 0;
+
+  m_display->drawScanningScreen(0, stationCount);
   m_radio->scan();
+  m_display->drawScanningScreen(100, stationCount);
   saveStationList();
+
+  m_display->drawReceivingScreen();
 
   currentStation = 0;
   if (stationCount > 0)
@@ -334,7 +341,6 @@ void state_scanning()
     preferences.putUChar("currentStation", currentStation);
   }
 
-  m_display->drawReceivingScreen();
   m_state = STATE_RECEIVING;
 }
 

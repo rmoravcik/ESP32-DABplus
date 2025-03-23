@@ -134,9 +134,36 @@ SPIClass* Display::getSPIinstance()
 
 void Display::drawReceivingScreen()
 {
+  Serial.println("drawReceivingScreen");
+
   m_tft->fillScreen(TFT_BLACK);
   drawControls();
   drawSlideShow();
+}
+
+void Display::drawScanningScreen(uint8_t progress, uint8_t stations)
+{
+  Serial.print("drawScanningScreen progress=");
+  Serial.println(progress);
+
+  if (progress == 0)
+  {
+    m_tft->fillScreen(TFT_BLACK);
+    m_tft->fillRoundRect(40, 105, 400, 110, 10, TFT_WHITE);
+    m_tft->drawRoundRect(40, 105, 400, 110, 10, TFT_DARKGREY);
+    m_tft->drawRoundRect(60, 168, 360, 24, 4, TFT_BLACK);
+
+    m_tft->setTextColor(TFT_BLACK, TFT_WHITE);
+    m_tft->setTextSize(1);
+    m_tft->loadFont("Roboto-Regular20", LittleFS);
+    m_tft->setTextDatum(TC_DATUM);
+
+    m_tft->drawString("Vyhledávam stanice", 240, 128);
+  }
+  else
+  {
+    m_tft->fillRoundRect(60, 168, (progress * 360) / 100, 24, 4, TFT_DARKGREY);
+  }
 }
 
 void Display::drawTime(uint8_t hour, uint8_t min)
@@ -302,8 +329,8 @@ void Display::drawMainMenu()
   m_tft->drawString("Hlasitost", 94, 187);
   m_tft->drawString("Spět", 94, 257);
 
-  m_tft->fillCircle(320, 195, 25, TFT_DARKGREY);
-  m_tft->fillRect(307, 193, 26, 4, TFT_WHITE);
+  m_tft->fillCircle(325, 195, 25, TFT_DARKGREY);
+  m_tft->fillRect(312, 193, 26, 4, TFT_WHITE);
 
   m_tft->fillCircle(395, 195, 25, TFT_DARKGREY);
   m_tft->fillRect(393, 182, 4, 26, TFT_WHITE);
