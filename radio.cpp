@@ -377,6 +377,13 @@ int8_t Radio::getSignalStrength()
   return (m_dab->signalstrength * m_dab->quality) / 100;
 }
 
+void Radio::setVolume(uint8_t vol)
+{
+  Serial.print("Volume=");
+  Serial.println(vol);
+  m_dab->vol(vol);
+}
+
 void DABSpiMsg(unsigned char *data, uint32_t len)
 {
   m_spi->beginTransaction(SPISettings(SI4684_SPI_FREQ, MSBFIRST, SPI_MODE0));

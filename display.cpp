@@ -301,6 +301,13 @@ void Display::drawMainMenu()
   m_tft->drawString("Připojit", 94, 117);
   m_tft->drawString("Hlasitost", 94, 187);
   m_tft->drawString("Spět", 94, 257);
+
+  m_tft->fillCircle(320, 195, 25, TFT_DARKGREY);
+  m_tft->fillRect(307, 193, 26, 4, TFT_WHITE);
+
+  m_tft->fillCircle(395, 195, 25, TFT_DARKGREY);
+  m_tft->fillRect(393, 182, 4, 26, TFT_WHITE);
+  m_tft->fillRect(382, 193, 26, 4, TFT_WHITE);
 }
 
 void Display::drawControls()

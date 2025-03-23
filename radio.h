@@ -22,6 +22,7 @@ public:
   void setStationFoundCallback(stationFoundType callback);
   void update();
   void scan();
+  void setVolume(uint8_t vol);
 
   void getTime(uint8_t *hour, uint8_t *min);
   int8_t getSignalStrength();

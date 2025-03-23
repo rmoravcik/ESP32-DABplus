@@ -31,6 +31,8 @@ StationInfo stationList[100];
 uint8_t stationCount = 0;
 uint8_t currentStation = 0;
 
+uint8_t volume = 25;
+
 Preferences preferences;
 
 void init_psram()
@@ -194,6 +196,7 @@ void setup()
 
   preferences.begin("ESP32-DABplus", false);
   currentStation = preferences.getUChar("currentStation", 0);
+  volume = preferences.getUChar("volume", 25);
 
   if (currentStation >= stationCount)
   {
@@ -201,6 +204,7 @@ void setup()
   }
 
   tuneStation(currentStation);
+  m_radio->setVolume(volume);
 }
 
 void state_receiving()
@@ -286,7 +290,26 @@ void state_main_menu()
       }
       else if ((y > 160) && (y < 230))
       {
-        // volume
+        // volume down
+        if ((x > 295) && (x < 345))
+        {
+          if (volume > 0)
+          {
+            volume--;
+            m_radio->setVolume(volume);
+            preferences.putUChar("volume", volume);
+          }
+        }
+        // volume down
+        else if ((x > 370) && (x < 420))
+        {
+          if (volume < 63)
+          {
+            volume++;
+            m_radio->setVolume(volume);
+            preferences.putUChar("volume", volume);
+          }
+        }
       }
       else if ((y > 230) && (y < 300))
       {
