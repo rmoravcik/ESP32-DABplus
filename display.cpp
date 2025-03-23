@@ -148,17 +148,23 @@ void Display::drawScanningScreen(uint8_t progress, uint8_t stations)
 
   if (progress == 0)
   {
-    m_tft->fillScreen(TFT_BLACK);
-    m_tft->fillRoundRect(40, 105, 400, 110, 10, TFT_WHITE);
-    m_tft->drawRoundRect(40, 105, 400, 110, 10, TFT_DARKGREY);
-    m_tft->drawRoundRect(60, 168, 360, 24, 4, TFT_BLACK);
+    TFT_eSprite screen = TFT_eSprite(m_tft);
+    screen.createSprite(480, 320);
 
-    m_tft->setTextColor(TFT_BLACK, TFT_WHITE);
-    m_tft->setTextSize(1);
-    m_tft->loadFont("Roboto-Regular20", LittleFS);
-    m_tft->setTextDatum(TC_DATUM);
+    screen.fillScreen(TFT_BLACK);
+    screen.fillRoundRect(40, 105, 400, 110, 10, TFT_WHITE);
+    screen.drawRoundRect(40, 105, 400, 110, 10, TFT_DARKGREY);
+    screen.drawRoundRect(60, 168, 360, 24, 4, TFT_BLACK);
 
-    m_tft->drawString("Vyhledávam stanice", 240, 128);
+    screen.setTextColor(TFT_BLACK, TFT_WHITE);
+    screen.setTextSize(1);
+    screen.loadFont("Roboto-Regular20", LittleFS);
+    screen.setTextDatum(TC_DATUM);
+    screen.drawString("Vyhledávam stanice", 240, 130);
+    screen.unloadFont();
+
+    screen.pushSprite(0, 0);
+    screen.deleteSprite();
   }
   else
   {
