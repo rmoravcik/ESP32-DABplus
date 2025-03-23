@@ -8,6 +8,9 @@ TFT_eSPI *Display::m_tft = NULL;
 TFT_eSprite *Display::m_serviceDataSprite = NULL;
 TFT_eSprite *Display::m_statusBarSprite = NULL;
 
+int Display::m_pngPosX = 0;
+int Display::m_pngPosY = 0;
+
 fs::File file;
 PNG png;
 
@@ -21,6 +24,12 @@ PNG png;
 Display::Display()
 {
   Serial.println("Initializing display");
+
+  // Remove old slideshow
+  if (LittleFS.exists("/slideshow.img"))
+  {
+    LittleFS.remove("/slideshow.img");
+  }
 
   m_calibrationData[0] = 328;
   m_calibrationData[1] = 3504;
@@ -57,7 +66,7 @@ Display::Display()
   m_serviceDataSprite->loadFont("Roboto-Regular20", LittleFS);
 
   drawTime(12, 0);
-  drawSlideShow(true);
+  drawSlideShow();
   drawRdsText(m_welcomeText);
   drawSignalIndicator(0);
   drawControls();
@@ -65,7 +74,6 @@ Display::Display()
 
 Display::~Display()
 {
-
 }
 
 bool Display::getTouch(uint16_t *x, uint16_t *y)
@@ -122,6 +130,13 @@ void Display::update()
 SPIClass* Display::getSPIinstance()
 {
   return &m_tft->getSPIinstance();
+}
+
+void Display::drawReceivingScreen()
+{
+  m_tft->fillScreen(TFT_BLACK);
+  drawControls();
+  drawSlideShow();
 }
 
 void Display::drawTime(uint8_t hour, uint8_t min)
@@ -189,8 +204,14 @@ void Display::drawStationLabel(String label)
     return;
   }
 
+  // Remove old slideshow
+  if (LittleFS.exists("/slideshow.img"))
+  {
+    LittleFS.remove("/slideshow.img");
+  }
+
   // Reset slideshow and rds text
-  drawSlideShow(true);
+  drawSlideShow();
   drawRdsText(m_welcomeText);
 
   m_statusBarSprite->fillRect(80, 0, 240, 25, STATUS_BAR_BG_COLOR);
@@ -199,11 +220,11 @@ void Display::drawStationLabel(String label)
   m_statusBarSprite->pushSprite(0, 0);
 }
 
-void Display::drawSlideShow(bool logo)
+void Display::drawSlideShow()
 {
-  if (logo)
+  if (!LittleFS.exists("/slideshow.img"))
   {
-    renderPng((const char *)"/dab_logo.png");
+    renderPng((const char *)"/dab_logo.png", 80, 40);
   }
   else
   {
@@ -213,7 +234,7 @@ void Display::drawSlideShow(bool logo)
     } 
     else 
     {
-      renderPng((const char *)"/slideshow.img");
+      renderPng((const char *)"/slideshow.img", 80, 40);
     }
 
   }
@@ -257,17 +278,42 @@ int32_t Display::drawRdsText(String text, uint16_t offset)
   return rdsTextWidth;
 }
 
+void Display::drawMainMenu()
+{
+  m_tft->fillRoundRect(40, 20, 400, 280, 10, TFT_WHITE);
+  m_tft->drawRoundRect(40, 20, 400, 280, 10, TFT_DARKGREY);
+  m_tft->drawLine(50, 20, 430, 20, TFT_DARKGREY);
+  m_tft->drawLine(50, 90, 430, 90, TFT_DARKGREY);
+  m_tft->drawLine(50, 160, 430, 160, TFT_DARKGREY);
+  m_tft->drawLine(50, 230, 430, 230, TFT_DARKGREY);
+
+  renderPng((const char *)"/search.png", 60, 43);
+  renderPng((const char *)"/bluetooth.png", 60, 113);
+  renderPng((const char *)"/volume.png", 60, 183);
+  renderPng((const char *)"/back.png", 60, 253);
+
+  m_tft->setTextColor(TFT_BLACK, TFT_WHITE);
+  m_tft->setTextSize(1);
+  m_tft->loadFont("Roboto-Regular20", LittleFS);
+  m_tft->setTextDatum(TL_DATUM);
+
+  m_tft->drawString("Vyhledat", 94, 47);
+  m_tft->drawString("Připojit", 94, 117);
+  m_tft->drawString("Hlasitost", 94, 187);
+  m_tft->drawString("Spět", 94, 257);
+}
+
 void Display::drawControls()
 {
   // previous station
-  m_tft->drawCircle(40, 160, 30, TFT_WHITE);
+  m_tft->fillCircle(40, 160, 30, TFT_DARKGREY);
   m_tft->fillTriangle(30, 160, 52, 147, 52, 173, TFT_WHITE);
-  m_tft->fillRect(27, 147, 3, 26, TFT_WHITE);
+  m_tft->fillRect(27, 147, 4, 26, TFT_WHITE);
 
   // next station
-  m_tft->drawCircle(440, 160, 30, TFT_WHITE);
+  m_tft->fillCircle(440, 160, 30, TFT_DARKGREY);
   m_tft->fillTriangle(450, 160, 428, 147, 428, 173, TFT_WHITE);
-  m_tft->fillRect(451, 147, 3, 26, TFT_WHITE);
+  m_tft->fillRect(450, 147, 4, 26, TFT_WHITE);
 
   // menu
   m_tft->fillRect(27, 50, 25, 3, TFT_WHITE);
@@ -293,8 +339,11 @@ bool Display::isJpegFile()
   return false;
 }
 
-void Display::renderPng(const char *filename)
+void Display::renderPng(const char *filename, int x, int y)
 {
+    m_pngPosX = x;
+    m_pngPosY = y;
+
     int ret = png.open(filename, pngOpen, pngClose, pngRead, pngSeek, pngDraw);
     if (ret == PNG_SUCCESS)
     {
@@ -454,5 +503,5 @@ void Display::pngDraw(PNGDRAW *pDraw)
   uint16_t usPixels[320];
 
   png.getLineAsRGB565(pDraw, usPixels, PNG_RGB565_BIG_ENDIAN, 0xffffffff);
-  m_tft->pushImage(80, 40 + pDraw->y, pDraw->iWidth, 1, usPixels);
+  m_tft->pushImage(m_pngPosX, m_pngPosY + pDraw->y, pDraw->iWidth, 1, usPixels);
 }

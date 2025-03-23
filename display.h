@@ -17,11 +17,14 @@ public:
 
   bool getTouch(uint16_t *x, uint16_t *y);
 
+  void drawReceivingScreen();
+
   void drawTime(uint8_t hour, uint8_t min);
   void drawSignalIndicator(int8_t strength);
   void drawStationLabel(String label);
-  void drawSlideShow(bool logo = false);
+  void drawSlideShow();
   void drawRdsText(String text);
+  void drawMainMenu(void);
 
   static TFT_eSPI *m_tft;
   static TFT_eSprite *m_statusBarSprite;
@@ -42,7 +45,7 @@ public:
   void drawControls();
 
   bool isJpegFile();
-  void renderPng(const char *filename);
+  void renderPng(const char *filename, int x, int y);
   void renderJpeg(const char *filename);
   
   void jpegInfo();
@@ -52,6 +55,9 @@ public:
   static int32_t pngRead(PNGFILE *handle, uint8_t *buffer, int32_t length);
   static int32_t pngSeek(PNGFILE *handle, int32_t position);
   static void pngDraw(PNGDRAW *pDraw);
+
+  static int m_pngPosX;
+  static int m_pngPosY;
 };
 
 #endif

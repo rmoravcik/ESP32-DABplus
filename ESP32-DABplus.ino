@@ -9,6 +9,8 @@
 
 #include "ESP32-DABplus.h"
 
+State m_state = STATE_RECEIVING;
+
 BtAudio *m_btaudio = NULL;
 BtScanner *m_btscanner = NULL;
 Display *m_display = NULL;
@@ -188,10 +190,6 @@ void setup()
   m_radio->setSlideShowUpdatedCallback(slideShowUpdated);
   m_radio->setStationFoundCallback(stationFound);
 
-  // m_radio->scan();
-  // saveStationList();
-  // while (1) {}
-
   loadStationList();
 
   preferences.begin("ESP32-DABplus", false);
@@ -205,7 +203,7 @@ void setup()
   tuneStation(currentStation);
 }
 
-void loop()
+void state_receiving()
 {
   uint8_t hour = 0, min = lastMin;
   unsigned long curMillis = millis();
@@ -232,6 +230,8 @@ void loop()
       {
         currentStation = stationCount - 1;
       }
+      tuneStation(currentStation);
+      preferences.putUChar("currentStation", currentStation);
     }
     else if (((x > 400) && (x < 480)) && ((y > 120) && (y < 200)))
     {
@@ -240,10 +240,14 @@ void loop()
       {
         currentStation = 0;
       }
+      tuneStation(currentStation);
+      preferences.putUChar("currentStation", currentStation);
     }
-
-    tuneStation(currentStation);
-    preferences.putUChar("currentStation", currentStation);
+    else if (((x >10) && (x < 70)) && ((y > 30) && (y < 90)))
+    {
+      m_display->drawMainMenu();
+      m_state = STATE_MAIN_MENU;
+    }
   }
 
   // one second jobs
@@ -259,5 +263,72 @@ void loop()
     m_display->drawSignalIndicator(m_radio->getSignalStrength());
 
     lastMillis = curMillis;
+  }
+}
+      
+void state_main_menu()
+{
+  uint16_t x;
+  uint16_t y;
+
+  if (m_display->getTouch(&x, &y))
+  {
+    if ((x > 40) && (x < 440))
+    {
+      if ((y > 20) && (y < 90))
+      {
+        // scan radio stations
+        m_state = STATE_SCANNING;
+      }
+      else if ((y > 90) && (y < 160))
+      {
+        // connect to bluetooth
+      }
+      else if ((y > 160) && (y < 230))
+      {
+        // volume
+      }
+      else if ((y > 230) && (y < 300))
+      {
+        // exit
+        m_display->drawReceivingScreen();
+        m_state = STATE_RECEIVING;
+      }
+    }
+  }
+}
+
+void state_scanning()
+{
+  stationCount = 0;
+  m_radio->scan();
+  saveStationList();
+
+  currentStation = 0;
+  if (stationCount > 0)
+  {
+    tuneStation(currentStation);
+    preferences.putUChar("currentStation", currentStation);
+  }
+
+  m_display->drawReceivingScreen();
+  m_state = STATE_RECEIVING;
+}
+
+void loop()
+{
+  switch (m_state)
+  {
+    case STATE_RECEIVING:
+      state_receiving();
+      break;
+    case STATE_MAIN_MENU:
+      state_main_menu();
+      break;
+    case STATE_SCANNING:
+      state_scanning();
+      break;
+    default:
+      break;
   }
 }

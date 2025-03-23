@@ -1,6 +1,13 @@
 #ifndef ESP32_DABPLUS_H
 #define ESP32_DABPLUS_H
 
+enum State
+{
+  STATE_RECEIVING = 0,
+  STATE_MAIN_MENU,
+  STATE_SCANNING
+};
+
 #define TFT_WIDTH  480
 #define TFT_HEIGHT 320
 
