@@ -23,9 +23,10 @@ public:
   void drawTime(uint8_t hour, uint8_t min);
   void drawSignalIndicator(int8_t strength);
   void drawStationLabel(String label);
-  void drawSlideShow();
+  void drawSlideShow(TFT_eSprite *sprite = NULL);
   void drawRdsText(String text);
   void drawMainMenu(void);
+  void drawBluetoothMenu(void);
 
   static TFT_eSPI *m_tft;
   static TFT_eSprite *m_statusBarSprite;
@@ -43,11 +44,11 @@ public:
 
   int32_t drawRdsText(String text, uint16_t offset);
 
-  void drawControls();
+  void drawControls(TFT_eSprite *sprite = NULL);
 
   bool isJpegFile();
-  void renderPng(const char *filename, int x, int y);
-  void renderJpeg(const char *filename);
+  void renderPng(const char *filename, int x, int y, TFT_eSprite *sprite = NULL);
+  void renderJpeg(const char *filename, TFT_eSprite *sprite = NULL);
   
   void jpegInfo();
 
@@ -57,8 +58,9 @@ public:
   static int32_t pngSeek(PNGFILE *handle, int32_t position);
   static void pngDraw(PNGDRAW *pDraw);
 
-  static int m_pngPosX;
-  static int m_pngPosY;
+  static int m_ImagePosX;
+  static int m_ImagePosY;
+  static TFT_eSprite *m_ImageSprite;
 };
 
 #endif

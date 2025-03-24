@@ -221,8 +221,6 @@ void state_receiving()
   m_display->update();
   m_radio->update();
 
-  // m_btscanner->printAvailable();
-
   if (m_display->getTouch(&x, &y))
   {
     if (((x > 0) && (x < 80)) && ((y > 120) && (y < 200)))
@@ -277,6 +275,9 @@ void state_main_menu()
   uint16_t x;
   uint16_t y;
 
+  m_btaudio->update();
+  m_btscanner->update();
+
   if (m_display->getTouch(&x, &y))
   {
     if ((x > 40) && (x < 440))
@@ -289,6 +290,8 @@ void state_main_menu()
       else if ((y > 90) && (y < 160))
       {
         // connect to bluetooth
+        m_display->drawBluetoothMenu();
+        m_state = STATE_BLUETOOTH_MENU;
       }
       else if ((y > 160) && (y < 230))
       {
@@ -344,6 +347,38 @@ void state_scanning()
   m_state = STATE_RECEIVING;
 }
 
+void state_bluetooth_menu()
+{
+  unsigned long curMillis = millis();
+  uint16_t x;
+  uint16_t y;
+
+  m_btaudio->update();
+  m_btscanner->update();
+
+  if (m_display->getTouch(&x, &y))
+  {
+    if ((x > 40) && (x < 440))
+    {
+      if ((y > 230) && (y < 300))
+      {
+        // back
+        m_display->drawMainMenu();
+        m_state = STATE_MAIN_MENU;
+      }
+    }
+  }  
+
+  // ten seconds jobs
+  if ((curMillis - lastMillis) >= 10000)
+  {
+    m_btscanner->printAvailable();
+
+    lastMillis = curMillis;
+  }
+
+}
+
 void loop()
 {
   switch (m_state)
@@ -356,6 +391,9 @@ void loop()
       break;
     case STATE_SCANNING:
       state_scanning();
+      break;
+    case STATE_BLUETOOTH_MENU:
+      state_bluetooth_menu();
       break;
     default:
       break;

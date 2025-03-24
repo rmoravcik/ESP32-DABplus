@@ -8,8 +8,9 @@ TFT_eSPI *Display::m_tft = NULL;
 TFT_eSprite *Display::m_serviceDataSprite = NULL;
 TFT_eSprite *Display::m_statusBarSprite = NULL;
 
-int Display::m_pngPosX = 0;
-int Display::m_pngPosY = 0;
+int Display::m_ImagePosX = 0;
+int Display::m_ImagePosY = 0;
+TFT_eSprite *Display::m_ImageSprite = NULL;
 
 fs::File file;
 PNG png;
@@ -134,11 +135,16 @@ SPIClass* Display::getSPIinstance()
 
 void Display::drawReceivingScreen()
 {
-  Serial.println("drawReceivingScreen");
+  TFT_eSprite screen = TFT_eSprite(m_tft);
+  screen.createSprite(480, 320);
 
-  m_tft->fillScreen(TFT_BLACK);
-  drawControls();
-  drawSlideShow();
+  screen.fillScreen(TFT_BLACK);
+  drawControls(&screen);
+  drawSlideShow(&screen);
+  m_statusBarSprite->pushToSprite(&screen, 0, 0);
+
+  screen.pushSprite(0, 0);
+  screen.deleteSprite();
 }
 
 void Display::drawScanningScreen(uint8_t progress, uint8_t stations)
@@ -253,21 +259,21 @@ void Display::drawStationLabel(String label)
   m_statusBarSprite->pushSprite(0, 0);
 }
 
-void Display::drawSlideShow()
+void Display::drawSlideShow(TFT_eSprite *sprite)
 {
   if (!LittleFS.exists("/slideshow.img"))
   {
-    renderPng((const char *)"/dab_logo.png", 80, 40);
+    renderPng((const char *)"/dab_logo.png", 80, 40, sprite);
   }
   else
   {
     if (isJpegFile())
     {
-      renderJpeg((const char *)"/slideshow.img");
+      renderJpeg((const char *)"/slideshow.img", sprite);
     } 
     else 
     {
-      renderPng((const char *)"/slideshow.img", 80, 40);
+      renderPng((const char *)"/slideshow.img", 80, 40, sprite);
     }
 
   }
@@ -313,52 +319,107 @@ int32_t Display::drawRdsText(String text, uint16_t offset)
 
 void Display::drawMainMenu()
 {
-  m_tft->fillRoundRect(40, 20, 400, 280, 10, TFT_WHITE);
-  m_tft->drawRoundRect(40, 20, 400, 280, 10, TFT_DARKGREY);
-  m_tft->drawLine(50, 20, 430, 20, TFT_DARKGREY);
-  m_tft->drawLine(50, 90, 430, 90, TFT_DARKGREY);
-  m_tft->drawLine(50, 160, 430, 160, TFT_DARKGREY);
-  m_tft->drawLine(50, 230, 430, 230, TFT_DARKGREY);
+  TFT_eSprite menu = TFT_eSprite(m_tft);
+  menu.createSprite(400, 280);
 
-  renderPng((const char *)"/search.png", 60, 43);
-  renderPng((const char *)"/bluetooth.png", 60, 113);
-  renderPng((const char *)"/volume.png", 60, 183);
-  renderPng((const char *)"/back.png", 60, 253);
+  menu.fillRoundRect(0, 0, 400, 280, 10, TFT_WHITE);
+  menu.drawRoundRect(0, 0, 400, 280, 10, TFT_DARKGREY);
+  menu.drawLine(10, 0, 390, 0, TFT_DARKGREY);
+  menu.drawLine(10, 70, 390, 70, TFT_DARKGREY);
+  menu.drawLine(10, 140, 390, 140, TFT_DARKGREY);
+  menu.drawLine(10, 210, 390, 210, TFT_DARKGREY);
 
-  m_tft->setTextColor(TFT_BLACK, TFT_WHITE);
-  m_tft->setTextSize(1);
-  m_tft->loadFont("Roboto-Regular20", LittleFS);
-  m_tft->setTextDatum(TL_DATUM);
+  renderPng((const char *)"/search.png", 20, 23, &menu);
+  renderPng((const char *)"/bluetooth.png", 20, 93, &menu);
+  renderPng((const char *)"/volume.png", 20, 163, &menu);
+  renderPng((const char *)"/back.png", 20, 233, &menu);
 
-  m_tft->drawString("Vyhledat", 94, 47);
-  m_tft->drawString("Připojit", 94, 117);
-  m_tft->drawString("Hlasitost", 94, 187);
-  m_tft->drawString("Spět", 94, 257);
+  menu.setTextColor(TFT_BLACK, TFT_WHITE);
+  menu.setTextSize(1);
+  menu.loadFont("Roboto-Regular20", LittleFS);
+  menu.setTextDatum(TL_DATUM);
 
-  m_tft->fillCircle(325, 195, 25, TFT_DARKGREY);
-  m_tft->fillRect(312, 193, 26, 4, TFT_WHITE);
+  menu.drawString("Vyhledat", 54, 27);
+  menu.drawString("Připojit", 54, 97);
+  menu.drawString("Hlasitost", 54, 167);
+  menu.drawString("Spět", 54, 237);
 
-  m_tft->fillCircle(395, 195, 25, TFT_DARKGREY);
-  m_tft->fillRect(393, 182, 4, 26, TFT_WHITE);
-  m_tft->fillRect(382, 193, 26, 4, TFT_WHITE);
+  menu.unloadFont();
+
+  menu.fillCircle(285, 175, 25, TFT_DARKGREY);
+  menu.fillRect(272, 173, 26, 4, TFT_WHITE);
+
+  menu.fillCircle(355, 175, 25, TFT_DARKGREY);
+  menu.fillRect(353, 162, 4, 26, TFT_WHITE);
+  menu.fillRect(342, 173, 26, 4, TFT_WHITE);
+
+  menu.pushSprite(40, 20);
+  menu.deleteSprite();
 }
 
-void Display::drawControls()
+void Display::drawBluetoothMenu(void)
 {
-  // previous station
-  m_tft->fillCircle(40, 160, 30, TFT_DARKGREY);
-  m_tft->fillTriangle(30, 160, 52, 147, 52, 173, TFT_WHITE);
-  m_tft->fillRect(27, 147, 4, 26, TFT_WHITE);
+  TFT_eSprite menu = TFT_eSprite(m_tft);
+  menu.createSprite(400, 280);
 
-  // next station
-  m_tft->fillCircle(440, 160, 30, TFT_DARKGREY);
-  m_tft->fillTriangle(450, 160, 428, 147, 428, 173, TFT_WHITE);
-  m_tft->fillRect(450, 147, 4, 26, TFT_WHITE);
+  menu.fillRoundRect(0, 0, 400, 280, 10, TFT_WHITE);
+  menu.drawRoundRect(0, 0, 400, 280, 10, TFT_DARKGREY);
 
-  // menu
-  m_tft->fillRect(27, 50, 25, 3, TFT_WHITE);
-  m_tft->fillRect(27, 58, 25, 3, TFT_WHITE);
-  m_tft->fillRect(27, 66, 25, 3, TFT_WHITE);
+  menu.drawRect(10, 10, 380, 210, TFT_DARKGREY);
+  menu.fillRoundRect(363, 54, 10, 122, 5, TFT_BLACK);
+  renderPng((const char *)"/up.png", 356, 20, &menu);
+  renderPng((const char *)"/down.png", 356, 186, &menu);
+  renderPng((const char *)"/back.png", 20, 233, &menu);
+
+  menu.setTextColor(TFT_BLACK, TFT_WHITE);
+  menu.setTextSize(1);
+  menu.loadFont("Roboto-Regular20", LittleFS);
+  menu.setTextDatum(TL_DATUM);
+
+  menu.drawString("Spět", 54, 237);
+
+  menu.unloadFont();
+
+  menu.pushSprite(40, 20);
+  menu.deleteSprite();
+}
+
+void Display::drawControls(TFT_eSprite *sprite)
+{
+  if (sprite)
+  {
+    // previous station
+    sprite->fillCircle(40, 160, 30, TFT_DARKGREY);
+    sprite->fillTriangle(30, 160, 52, 147, 52, 173, TFT_WHITE);
+    sprite->fillRect(27, 147, 4, 26, TFT_WHITE);
+
+    // next station
+    sprite->fillCircle(440, 160, 30, TFT_DARKGREY);
+    sprite->fillTriangle(450, 160, 428, 147, 428, 173, TFT_WHITE);
+    sprite->fillRect(450, 147, 4, 26, TFT_WHITE);
+
+    // menu
+    sprite->fillRect(27, 50, 25, 3, TFT_WHITE);
+    sprite->fillRect(27, 58, 25, 3, TFT_WHITE);
+    sprite->fillRect(27, 66, 25, 3, TFT_WHITE);
+  }
+  else
+  {
+    // previous station
+    m_tft->fillCircle(40, 160, 30, TFT_DARKGREY);
+    m_tft->fillTriangle(30, 160, 52, 147, 52, 173, TFT_WHITE);
+    m_tft->fillRect(27, 147, 4, 26, TFT_WHITE);
+
+    // next station
+    m_tft->fillCircle(440, 160, 30, TFT_DARKGREY);
+    m_tft->fillTriangle(450, 160, 428, 147, 428, 173, TFT_WHITE);
+    m_tft->fillRect(450, 147, 4, 26, TFT_WHITE);
+
+    // menu
+    m_tft->fillRect(27, 50, 25, 3, TFT_WHITE);
+    m_tft->fillRect(27, 58, 25, 3, TFT_WHITE);
+    m_tft->fillRect(27, 66, 25, 3, TFT_WHITE);
+  }
 }
 
 bool Display::isJpegFile()
@@ -379,10 +440,11 @@ bool Display::isJpegFile()
   return false;
 }
 
-void Display::renderPng(const char *filename, int x, int y)
+void Display::renderPng(const char *filename, int x, int y, TFT_eSprite *sprite)
 {
-    m_pngPosX = x;
-    m_pngPosY = y;
+    m_ImagePosX = x;
+    m_ImagePosY = y;
+    m_ImageSprite = sprite;
 
     int ret = png.open(filename, pngOpen, pngClose, pngRead, pngSeek, pngDraw);
     if (ret == PNG_SUCCESS)
@@ -392,7 +454,7 @@ void Display::renderPng(const char *filename, int x, int y)
     png.close();
 }
 
-void Display::renderJpeg(const char *filename)
+void Display::renderJpeg(const char *filename, TFT_eSprite *sprite)
 {
   file = LittleFS.open(filename, "rb");
   bool decoded = JpegDec.decodeFsFile(file);
@@ -403,7 +465,7 @@ void Display::renderJpeg(const char *filename)
     return;
   }
 
-//  jpegInfo();
+  // jpegInfo();
 
   uint16_t *pImg;
   uint16_t mcu_w = JpegDec.MCUWidth;
@@ -414,7 +476,14 @@ void Display::renderJpeg(const char *filename)
   int ypos = 40;
 
   bool swapBytes = m_tft->getSwapBytes();
-  m_tft->setSwapBytes(true);
+  if (sprite)
+  {
+    sprite->setSwapBytes(true);
+  }
+  else
+  {
+    m_tft->setSwapBytes(true);
+  }
   
   // Jpeg images are draw as a set of image block (tiles) called Minimum Coding Units (MCUs)
   // Typically these MCUs are 16x16 pixel blocks
@@ -470,13 +539,27 @@ void Display::renderJpeg(const char *filename)
     // draw image MCU block only if it will fit on the screen
     if (( mcu_x + win_w ) <= m_tft->width() && ( mcu_y + win_h ) <= m_tft->height())
     {
-      m_tft->pushImage(mcu_x, mcu_y, win_w, win_h, pImg);
+      if (sprite)
+      {
+        sprite->pushImage(mcu_x, mcu_y, win_w, win_h, pImg);
+      }
+      else
+      {
+        m_tft->pushImage(mcu_x, mcu_y, win_w, win_h, pImg);
+      }
     }
     else if ( (mcu_y + win_h) >= m_tft->height())
       JpegDec.abort(); // Image has run off bottom of screen so abort decoding
   }
   
-  m_tft->setSwapBytes(swapBytes);
+  if (sprite)
+  {
+    sprite->setSwapBytes(swapBytes);
+  }
+  else
+  {
+    m_tft->setSwapBytes(swapBytes);
+  }
 
   file.close();
 }
@@ -543,5 +626,12 @@ void Display::pngDraw(PNGDRAW *pDraw)
   uint16_t usPixels[320];
 
   png.getLineAsRGB565(pDraw, usPixels, PNG_RGB565_BIG_ENDIAN, 0xffffffff);
-  m_tft->pushImage(m_pngPosX, m_pngPosY + pDraw->y, pDraw->iWidth, 1, usPixels);
+  if (m_ImageSprite)
+  {
+    m_ImageSprite->pushImage(m_ImagePosX, m_ImagePosY + pDraw->y, pDraw->iWidth, 1, usPixels);
+  }
+  else
+  {
+    m_tft->pushImage(m_ImagePosX, m_ImagePosY + pDraw->y, pDraw->iWidth, 1, usPixels);
+  }
 }
