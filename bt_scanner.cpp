@@ -1,4 +1,4 @@
-#include <string.h>
+ #include <string.h>
 
 #include "bt_scanner.h"
 
@@ -27,6 +27,7 @@ bool BtScanner::insert(const char* ssid)
     }
 
     // insert new entry
+    Serial.println("inserting...");
     if (list[i] == NULL)
     {
       struct bt_entry *entry = (struct bt_entry *) malloc(sizeof (struct bt_entry));

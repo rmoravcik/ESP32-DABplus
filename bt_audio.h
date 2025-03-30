@@ -1,6 +1,9 @@
 #ifndef BT_AUDIO_H
 #define BT_AUDIO_H
 
+#include <AudioLogger.h>
+#include <AudioTools.h>
+#include <AudioToolsConfig.h>
 #include <BluetoothA2DPSource.h>
 #include <Arduino.h>
 
@@ -14,6 +17,9 @@ public:
 
   void update();
 
+  void setVolume(uint8_t vol);
+  void connectTo(String ssid);
+
   static int32_t get_data_frames(Frame *frame, int32_t frame_count);
   static void connection_state_changed(esp_a2d_connection_state_t state, void *ptr);
   static bool isValid(const char* ssid, esp_bd_addr_t address, int rssi);
@@ -22,6 +28,10 @@ public:
   static BluetoothA2DPSource *m_a2dp_src;
 
  private:
+  static String m_ssid;
+  static uint8_t m_volume;
+
+  I2SStream *m_i2s;
 };
 
 #endif

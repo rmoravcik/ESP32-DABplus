@@ -17,6 +17,7 @@ Display *m_display = NULL;
 Radio *m_radio = NULL;
 
 uint8_t lastMin = -1;
+unsigned long lastMillisMain = 0;
 unsigned long lastMillis = 0;
 
 struct StationInfo
@@ -56,6 +57,16 @@ void init_psram()
   // Check available PSRAM
   size_t freePsram = ESP.getFreePsram();
   Serial.print("Free PSRAM: ");
+  Serial.println(freePsram);
+}
+
+void check_mem_usage()
+{
+  uint32_t freeHeap = ESP.getFreeHeap();
+  uint32_t freePsram = ESP.getFreePsram();
+  Serial.print("Free HEAP: ");
+  Serial.print(freeHeap);
+  Serial.print(", PSRAM: ");
   Serial.println(freePsram);
 }
 
@@ -180,6 +191,7 @@ void tuneStation(uint8_t index)
 void setup()
 {
   Serial.begin(115200);
+  check_mem_usage();
 
   init_gpio();
   init_psram();
@@ -207,6 +219,7 @@ void setup()
 
   tuneStation(currentStation);
   m_radio->setVolume(volume);
+  m_btaudio->setVolume(volume);
 }
 
 void state_receiving()
@@ -302,6 +315,7 @@ void state_main_menu()
           {
             volume--;
             m_radio->setVolume(volume);
+            m_btaudio->setVolume(volume);
             preferences.putUChar("volume", volume);
           }
         }
@@ -312,6 +326,7 @@ void state_main_menu()
           {
             volume++;
             m_radio->setVolume(volume);
+            m_btaudio->setVolume(volume);
             preferences.putUChar("volume", volume);
           }
         }
@@ -360,7 +375,11 @@ void state_bluetooth_menu()
   {
     if ((x > 40) && (x < 440))
     {
-      if ((y > 230) && (y < 300))
+      if ((y > 10) && (y < 220))
+      {
+        m_btaudio->connectTo("B13");
+      }
+      else if ((y > 230) && (y < 300))
       {
         // back
         m_display->drawMainMenu();
@@ -381,6 +400,8 @@ void state_bluetooth_menu()
 
 void loop()
 {
+  unsigned long curMillis = millis();
+
   switch (m_state)
   {
     case STATE_RECEIVING:
@@ -397,5 +418,12 @@ void loop()
       break;
     default:
       break;
+  }
+
+  // one seconds jobs
+  if ((curMillis - lastMillisMain) >= 1000)
+  {
+    check_mem_usage();
+    lastMillisMain = curMillis;
   }
 }
