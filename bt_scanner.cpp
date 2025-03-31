@@ -27,7 +27,6 @@ bool BtScanner::insert(const char* ssid)
     }
 
     // insert new entry
-    Serial.println("inserting...");
     if (list[i] == NULL)
     {
       struct bt_entry *entry = (struct bt_entry *) malloc(sizeof (struct bt_entry));
@@ -76,7 +75,7 @@ void BtScanner::update()
 
 void BtScanner::printAvailable()
 {
-  Serial.println("Available:");
+  Serial.println(F("Available:"));
   for (uint8_t i = 0; i < BT_SCANNER_LIST_SIZE; i++)
   {
     if (list[i] != NULL)

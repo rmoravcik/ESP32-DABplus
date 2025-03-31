@@ -25,7 +25,7 @@ enum State
 #define GPIO_TFT_DC       25
 #define GPIO_TOUCH_CS     27
 #define GPIO_TOUCH_IRQ    32
-#define GPIO_SI468X_DFS   34
+#define GPIO_SI468X_DFS   33
 #define GPIO_SI468X_INTB  39
 
 #define SI4684_SPI_FREQ   8000000

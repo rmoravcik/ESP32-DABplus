@@ -31,7 +31,7 @@ public:
   static String m_ssid;
   static uint8_t m_volume;
 
-  I2SStream *m_i2s;
+  static I2SStream *m_i2s;
 };
 
 #endif

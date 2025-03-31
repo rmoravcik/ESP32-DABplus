@@ -17,7 +17,9 @@ Display *m_display = NULL;
 Radio *m_radio = NULL;
 
 uint8_t lastMin = -1;
+#ifdef DEBUG_HEAP
 unsigned long lastMillisMain = 0;
+#endif
 unsigned long lastMillis = 0;
 
 struct StationInfo
@@ -41,32 +43,22 @@ void init_psram()
   // Check if PSRAM is enabled
   if (psramInit()) 
   {
-    Serial.println("PSRAM initialized successfully!");
+    Serial.println(F("PSRAM initialized successfully!"));
   } 
   else 
   {
-    Serial.println("PSRAM initialization failed...");
+    Serial.println(F("PSRAM initialization failed..."));
     while (1); // Stop if PSRAM isn't available
   }
-
-  // Check total available PSRAM
-  size_t psramSize = ESP.getPsramSize();
-  Serial.print("Total PSRAM: ");
-  Serial.println(psramSize);
-
-  // Check available PSRAM
-  size_t freePsram = ESP.getFreePsram();
-  Serial.print("Free PSRAM: ");
-  Serial.println(freePsram);
 }
 
 void check_mem_usage()
 {
   uint32_t freeHeap = ESP.getFreeHeap();
   uint32_t freePsram = ESP.getFreePsram();
-  Serial.print("Free HEAP: ");
+  Serial.print(F("Free HEAP: "));
   Serial.print(freeHeap);
-  Serial.print(", PSRAM: ");
+  Serial.print(F(", PSRAM: "));
   Serial.println(freePsram);
 }
 
@@ -116,7 +108,7 @@ void loadStationList(void)
   File file = LittleFS.open("/station_list.conf", "r");
   if (!file)
   {
-    Serial.println("Error opening /station_list.conf for reading");
+    Serial.println(F("Error opening /station_list.conf for reading"));
     return;
   }
 
@@ -168,7 +160,7 @@ void saveStationList(void)
   File file = LittleFS.open("/station_list.conf", "w");
   if (!file)
   {
-    Serial.println("Error opening /station_list.conf for writing");
+    Serial.println(F("Error opening /station_list.conf for writing"));
     return;
   }
 
@@ -182,7 +174,7 @@ void saveStationList(void)
 
 void tuneStation(uint8_t index)
 {
-  Serial.print("Tunning to station ");
+  Serial.print(F("Tunning to station "));
   Serial.println(stationList[index].label);
   m_display->drawStationLabel(stationList[index].label);
   m_radio->tuneStation(stationList[index].freqIndex, stationList[index].serviceId, stationList[index].compId);
@@ -230,7 +222,6 @@ void state_receiving()
   uint16_t y;
 
   m_btaudio->update();
-  m_btscanner->update();
   m_display->update();
   m_radio->update();
 
@@ -400,7 +391,9 @@ void state_bluetooth_menu()
 
 void loop()
 {
+#ifdef DEBUG_HEAP
   unsigned long curMillis = millis();
+#endif
 
   switch (m_state)
   {
@@ -420,10 +413,12 @@ void loop()
       break;
   }
 
+#ifdef DEBUG_HEAP
   // one seconds jobs
   if ((curMillis - lastMillisMain) >= 1000)
   {
     check_mem_usage();
     lastMillisMain = curMillis;
   }
+#endif
 }
