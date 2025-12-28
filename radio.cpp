@@ -241,7 +241,9 @@ void Radio::serviceData()
   {
     if (m_slideShowUpdatedCbf)
     {
-      m_slideShowUpdatedCbf();
+      uint32_t size;
+      uint8_t *pData = m_dab->slideshow(&size);
+      m_slideShowUpdatedCbf(pData, size);
     }
   }
 }

@@ -38,6 +38,8 @@ BtAudio::BtAudio(BtScanner *btscanner)
   m_a2dp_src->set_auto_reconnect(false);
   m_a2dp_src->set_on_connection_state_changed(connection_state_changed);
   m_a2dp_src->set_data_callback_in_frames(get_data_frames);
+
+  m_a2dp_src->start();
 }
 
 BtAudio::~BtAudio()
@@ -76,6 +78,9 @@ bool BtAudio::isValid(const char *ssid, esp_bd_addr_t address, int rssi)
     Serial.println(m_ssid);
     return true;
   }
+
+//  Serial.print("Found SSID: ");
+//  Serial.println(ssid);
 
   m_btscanner->insert(ssid);
   return false;

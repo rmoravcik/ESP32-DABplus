@@ -26,12 +26,6 @@ Display::Display()
 {
   Serial.println("Initializing display");
 
-  // Remove old slideshow
-  if (LittleFS.exists("/slideshow.img"))
-  {
-    LittleFS.remove("/slideshow.img");
-  }
-
   m_calibrationData[0] = 328;
   m_calibrationData[1] = 3504;
   m_calibrationData[2] = 348;
@@ -67,7 +61,7 @@ Display::Display()
   m_serviceDataSprite->loadFont("Roboto-Regular20", LittleFS);
 
   drawTime(12, 0);
-  drawSlideShow();
+  drawSlideShow(NULL, 0);
   drawRdsText(m_welcomeText);
   drawSignalIndicator(0);
   drawControls();
@@ -140,7 +134,7 @@ void Display::drawReceivingScreen()
 
   screen.fillScreen(TFT_BLACK);
   drawControls(&screen);
-  drawSlideShow(&screen);
+  drawSlideShow(NULL, 0, &screen);
   m_statusBarSprite->pushToSprite(&screen, 0, 0);
 
   screen.pushSprite(0, 0);
@@ -243,14 +237,8 @@ void Display::drawStationLabel(String label)
     return;
   }
 
-  // Remove old slideshow
-  if (LittleFS.exists("/slideshow.img"))
-  {
-    LittleFS.remove("/slideshow.img");
-  }
-
   // Reset slideshow and rds text
-  drawSlideShow();
+  drawSlideShow(NULL, 0);
   drawRdsText(m_welcomeText);
 
   m_statusBarSprite->fillRect(80, 0, 240, 25, STATUS_BAR_BG_COLOR);
@@ -259,23 +247,22 @@ void Display::drawStationLabel(String label)
   m_statusBarSprite->pushSprite(0, 0);
 }
 
-void Display::drawSlideShow(TFT_eSprite *sprite)
+void Display::drawSlideShow(uint8_t* data, uint32_t size, TFT_eSprite *sprite)
 {
-  if (!LittleFS.exists("/slideshow.img"))
+  if ((data != NULL) && (size > 0))
   {
-    renderPng((const char *)"/dab_logo.png", 80, 40, sprite);
-  }
-  else
-  {
-    if (isJpegFile())
+    if (isJpegFile(data, size))
     {
-      renderJpeg((const char *)"/slideshow.img", sprite);
+      renderJpeg(data, size, sprite);
     } 
     else 
     {
-      renderPng((const char *)"/slideshow.img", 80, 40, sprite);
+      renderPng(data, size, 80, 40, sprite);
     }
-
+  }
+  else
+  {
+    renderPng((const char *)"/dab_logo.png", 80, 40, sprite);
   }
 }
 
@@ -422,21 +409,15 @@ void Display::drawControls(TFT_eSprite *sprite)
   }
 }
 
-bool Display::isJpegFile()
+bool Display::isJpegFile(uint8_t* data, uint32_t size)
 {
-  File file;
-  size_t bytesRead;
-  byte header[8];
-
-  file = LittleFS.open("/slideshow.img", "r");
-  bytesRead = file.read(header, sizeof(header));
-  file.close();
-  
-  if ((header[0] == 0xFF) && (header[1] == 0xD8) && (header[2] == 0xFF))
+  if ((data[0] == 0xFF) && (data[1] == 0xD8) && (data[2] == 0xFF))
   {
+    Serial.println("is JPEG");
     return true;
   }
 
+    Serial.println("is PNG");
   return false;
 }
 
@@ -450,18 +431,32 @@ void Display::renderPng(const char *filename, int x, int y, TFT_eSprite *sprite)
     if (ret == PNG_SUCCESS)
     {
       ret = png.decode(NULL, 0);
+      Serial.print("ret=");
+      Serial.println(ret);
     }
     png.close();
 }
 
-void Display::renderJpeg(const char *filename, TFT_eSprite *sprite)
+void Display::renderPng(uint8_t* data, uint32_t size, int x, int y, TFT_eSprite *sprite)
 {
-  file = LittleFS.open(filename, "rb");
-  bool decoded = JpegDec.decodeFsFile(file);
+    m_ImagePosX = x;
+    m_ImagePosY = y;
+    m_ImageSprite = sprite;
+
+    int ret = png.openRAM(data, size, pngDraw);
+    if (ret == PNG_SUCCESS)
+    {
+      ret = png.decode(NULL, 0);
+    }
+    png.close();
+}
+
+void Display::renderJpeg(uint8_t* data, uint32_t size, TFT_eSprite *sprite)
+{
+  bool decoded = JpegDec.decodeArray(data, size);
   if (!decoded)
   {
     Serial.println("ERROR: JPEG decoding!");
-    file.close();
     return;
   }
 

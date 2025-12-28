@@ -16,7 +16,7 @@ struct bt_entry {
 };
 
 #define BT_SCANNER_LIST_SIZE 16
-#define BT_SCANNER_AGE_EXPIRED 3000
+#define BT_SCANNER_AGE_EXPIRED 10000
 
 class BtScanner
 {

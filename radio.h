@@ -7,7 +7,7 @@
 #include <SPI.h>
 
 typedef void (*rdsTextUpdatedType)(String text);
-typedef void (*slideShowUpdatedType)(void);
+typedef void (*slideShowUpdatedType)(uint8_t* data, uint32_t size);
 typedef void (*stationFoundType)(uint8_t freqIndex, uint32_t serviceId, uint32_t compId, String label);
 
 class Radio

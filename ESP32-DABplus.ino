@@ -87,9 +87,9 @@ void rdsTextUpdated(String text)
   m_display->drawRdsText(text);
 }
 
-void slideShowUpdated(void)
+void slideShowUpdated(uint8_t* data, uint32_t size)
 {
-  m_display->drawSlideShow();
+  m_display->drawSlideShow(data, size);
 }
 
 void stationFound(uint8_t freqIndex, uint32_t serviceId, uint32_t compId, String label)
@@ -368,7 +368,7 @@ void state_bluetooth_menu()
     {
       if ((y > 10) && (y < 220))
       {
-        m_btaudio->connectTo("B13");
+        m_btaudio->connectTo("BEACHBOOM");
       }
       else if ((y > 230) && (y < 300))
       {
