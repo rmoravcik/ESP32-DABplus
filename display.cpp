@@ -63,6 +63,7 @@ Display::Display()
   drawTime(12, 0);
   drawSlideShow(NULL, 0);
   drawRdsText(m_welcomeText);
+  drawBtIndicator(BT_INDICATOR_STATE_DISCONNECTED);
   drawSignalIndicator(0);
   drawControls();
 }
@@ -186,6 +187,51 @@ void Display::drawTime(uint8_t hour, uint8_t min)
   m_statusBarSprite->drawString(time, 5, 6);
   m_statusBarSprite->pushSprite(0, 0);
 }
+
+void Display::drawBtIndicator(bt_indicator_state state)
+{
+  uint16_t x = 436, y = 6;
+  static uint32_t lastColour = TFT_DARKGREY;
+  uint32_t colour = TFT_DARKGREY;
+
+  switch (state)
+  {
+    case BT_INDICATOR_STATE_CONNECTING:
+      if (lastColour == TFT_DARKGREY)
+      {
+        colour = TFT_WHITE;
+      }
+      else
+      {
+        colour = TFT_DARKGREY;
+      }
+      break;
+    case BT_INDICATOR_STATE_CONNECTED:
+      colour = TFT_WHITE;
+      break;
+    case BT_INDICATOR_STATE_DISCONNECTED:
+    default:
+      colour = TFT_DARKGREY;
+      break;
+  }
+
+  lastColour = colour;
+
+  m_statusBarSprite->fillRect(x + 3, y, 2, 11, colour);
+  m_statusBarSprite->fillRect(x, y + 2, 2, 2, colour);
+  m_statusBarSprite->fillRect(x, y + 7, 2, 2, colour);
+  m_statusBarSprite->fillRect(x + 6, y + 2, 2, 2, colour);
+  m_statusBarSprite->fillRect(x + 6, y + 7, 2, 2, colour);
+  m_statusBarSprite->fillRect(x + 2, y + 3, 4, 2, colour);
+  m_statusBarSprite->fillRect(x + 2, y + 6, 4, 2, colour);
+  m_statusBarSprite->fillRect(x + 5, y, 1, 1, colour);
+  m_statusBarSprite->fillRect(x + 5, y + 1, 2, 1, colour);
+  m_statusBarSprite->fillRect(x + 5, y + 9, 2, 1, colour);
+  m_statusBarSprite->fillRect(x + 5, y + 10, 1, 1, colour);
+  m_statusBarSprite->pushSprite(0, 0);
+
+}
+
 
 void Display::drawSignalIndicator(int8_t strength)
 {
@@ -431,8 +477,6 @@ void Display::renderPng(const char *filename, int x, int y, TFT_eSprite *sprite)
     if (ret == PNG_SUCCESS)
     {
       ret = png.decode(NULL, 0);
-      Serial.print("ret=");
-      Serial.println(ret);
     }
     png.close();
 }

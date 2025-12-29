@@ -6,7 +6,8 @@
 
 enum bt_entry_state {
   BT_ENTRY_STATE_DISCONNECTED = 0,
-  BT_ENTRY_STATE_CONNECTING
+  BT_ENTRY_STATE_CONNECTING,
+  BT_ENTRY_STATE_CONNECTED
 };
 
 struct bt_entry {

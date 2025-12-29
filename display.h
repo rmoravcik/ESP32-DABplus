@@ -6,6 +6,12 @@
 #include <JPEGDecoder.h>
 #include <PNGdec.h>
 
+enum bt_indicator_state {
+  BT_INDICATOR_STATE_DISCONNECTED = 0,
+  BT_INDICATOR_STATE_CONNECTING,
+  BT_INDICATOR_STATE_CONNECTED
+};
+
 class Display
 {
 public:
@@ -21,6 +27,7 @@ public:
   void drawScanningScreen(uint8_t progress, uint8_t stations);
 
   void drawTime(uint8_t hour, uint8_t min);
+  void drawBtIndicator(bt_indicator_state state);
   void drawSignalIndicator(int8_t strength);
   void drawStationLabel(String label);
   void drawSlideShow(uint8_t* data, uint32_t size, TFT_eSprite *sprite = NULL);

@@ -9,6 +9,12 @@
 
 #include "bt_scanner.h"
 
+enum bt_audio_state {
+  BT_AUDIO_STATE_DISCONNECTED = 0,
+  BT_AUDIO_STATE_CONNECTING,
+  BT_AUDIO_STATE_CONNECTED
+};
+
 class BtAudio
 {
 public:
@@ -19,6 +25,7 @@ public:
 
   void setVolume(uint8_t vol);
   void connectTo(String ssid);
+  bt_audio_state getState();
 
   static int32_t get_data_frames(Frame *frame, int32_t frame_count);
   static void connection_state_changed(esp_a2d_connection_state_t state, void *ptr);

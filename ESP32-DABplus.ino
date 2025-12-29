@@ -268,6 +268,7 @@ void state_receiving()
       lastMin = min;
     }
 
+    m_display->drawBtIndicator((bt_indicator_state)m_btaudio->getState());
     m_display->drawSignalIndicator(m_radio->getSignalStrength());
 
     lastMillis = curMillis;

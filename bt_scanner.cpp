@@ -60,11 +60,11 @@ bool BtScanner::insert(const char* ssid)
 
       list[i] = entry;
 
-//      Serial.print("i=");
-//      Serial.print(i);
-//      Serial.print(" ssid=");
-//      Serial.print(ssid);
-//      Serial.println(" insert");
+      Serial.print("i=");
+      Serial.print(i);
+      Serial.print(" ssid=");
+      Serial.print(ssid);
+      Serial.println(" insert");
 
       xSemaphoreGive(mutex);
       return true;

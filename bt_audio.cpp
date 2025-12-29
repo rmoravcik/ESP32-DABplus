@@ -54,6 +54,19 @@ int32_t BtAudio::get_data_frames(Frame *frame, int32_t frame_count)
   return m_i2s->readBytes((uint8_t*)frame, frame_count * BYTES_PER_FRAME) / BYTES_PER_FRAME;
 }
 
+bt_audio_state BtAudio::getState()
+{
+  switch (m_a2dp_src->get_connection_state())
+  {
+    case ESP_A2D_CONNECTION_STATE_CONNECTING:
+      return BT_AUDIO_STATE_CONNECTING;
+    case ESP_A2D_CONNECTION_STATE_CONNECTED:
+      return BT_AUDIO_STATE_CONNECTED;
+    default:
+      return BT_AUDIO_STATE_DISCONNECTED;
+  }
+}
+
 // for esp_a2d_connection_state_t see https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/bluetooth/esp_a2dp.html#_CPPv426esp_a2d_connection_state_t
 void BtAudio::connection_state_changed(esp_a2d_connection_state_t state, void *ptr)
 {
@@ -99,6 +112,6 @@ void BtAudio::setVolume(uint8_t vol)
 void BtAudio::connectTo(String ssid)
 {
   m_ssid = ssid;
-  m_a2dp_src->start();
+  m_a2dp_src->start(ssid.c_str());
   m_a2dp_src->set_connected(true);
 }
