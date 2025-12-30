@@ -1,6 +1,8 @@
 #ifndef ESP32_DABPLUS_H
 #define ESP32_DABPLUS_H
 
+#define VERSION "1.0.0"
+
 enum State
 {
   STATE_RECEIVING = 0,

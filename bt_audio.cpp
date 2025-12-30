@@ -141,10 +141,14 @@ void BtAudio::connectTo(String ssid)
   m_ssid = ssid;
   m_a2dp_src->start(ssid.c_str());
   m_a2dp_src->set_connected(true);
+
+  m_btscanner->insert(m_ssid.c_str());
+  m_btscanner->setState(m_ssid.c_str(), BT_ENTRY_STATE_CONNECTING);
 }
 
 void BtAudio::disconnect()
 {
+  m_btscanner->setState(m_ssid.c_str(), BT_ENTRY_STATE_DISCONNECTED);
   m_ssid = "";
   m_a2dp_src->set_connected(false);
 }

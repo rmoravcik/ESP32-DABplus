@@ -12,6 +12,12 @@ enum bt_indicator_state {
   BT_INDICATOR_STATE_CONNECTED
 };
 
+struct list_entry {
+  char *text;
+  char *icon;
+  bool is_selected;
+};
+
 class Display
 {
 public:
@@ -36,8 +42,8 @@ public:
   void drawMainMenuVolumeDown(uint16_t volume);
   void drawMainMenuVolumeUp(uint16_t volume);
   void drawRadioMenu(void);
-  void drawBluetoothMenu(void);
-  void drawBluetoothMenuEntries(const char* entry1, const char* entry2, const char* entry3, const uint8_t page, const uint8_t pages);
+  void drawListMenu(void);
+  void drawListMenuEntries(struct list_entry *entries, const uint8_t page, const uint8_t pages);
 
   static TFT_eSPI *m_tft;
   static TFT_eSprite *m_statusBarSprite;

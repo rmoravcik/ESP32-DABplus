@@ -38,6 +38,10 @@ uint8_t volume = 25;
 
 Preferences preferences;
 
+struct list_entry bt_list_entries[BT_SCANNER_LIST_SIZE];
+uint8_t bt_list_pages = 0;
+uint8_t bt_list_page = 0;
+
 void init_psram()
 {
   // Check if PSRAM is enabled
@@ -297,8 +301,42 @@ void state_main_menu()
       }
       else if ((y > 90) && (y < 160))
       {
-        m_display->drawBluetoothMenu();
-        m_display->drawBluetoothMenuEntries("BT13", "MID", "BEACHBOOM", 1, 3);
+        uint8_t j = 0;
+        struct bt_entry** bt_list = m_btscanner->getList();
+
+        memset(bt_list_entries, 0, sizeof(struct list_entry) * BT_SCANNER_LIST_SIZE);
+
+        m_btscanner->lockList();
+        for (uint8_t i = 0; i < BT_SCANNER_LIST_SIZE; i++)
+        {
+          if (bt_list[i] != NULL)
+          {
+            bt_list_entries[j].text = (char *) malloc(strlen(bt_list[i]->ssid) + 1);
+            strcpy(bt_list_entries[j].text, bt_list[i]->ssid);
+            bt_list_entries[j].icon = "/headphones.png";
+            if (bt_list[i]->state == BT_ENTRY_STATE_CONNECTED)
+            {
+              bt_list_entries[j].is_selected = true;
+            }
+            else
+            {
+              bt_list_entries[j].is_selected = false;
+            }
+            j++;
+          }
+        }
+        m_btscanner->unlockList();
+
+        bt_list_pages = 1;
+        if (j > 0)
+        {
+          bt_list_pages = ((j - 1) / 3) + 1;
+        }
+        bt_list_page = 0;
+
+        m_display->drawListMenu();
+        m_display->drawListMenuEntries(bt_list_entries, bt_list_page, bt_list_pages);
+        lastMillis = 0;
         m_state = STATE_BLUETOOTH_MENU;
       }
       else if ((y > 160) && (y < 230))
@@ -398,24 +436,86 @@ void state_bluetooth_menu()
 
   if (m_display->getTouch(&x, &y))
   {
-    if ((x > 40) && (x < 440))
+    if ((x > 40) && (x < 376))
     {
-      if ((y > 10) && (y < 220))
+      if (x > 50)
       {
-        if (m_btaudio->getState() == BT_AUDIO_STATE_DISCONNECTED)
+        uint8_t index = 0xFF;
+        if ((y > 30) && (y < 100))
         {
-          m_btaudio->connectTo("BEACHBOOM");
+          index = 3 * bt_list_page;
         }
-        else
+        else if ((y > 100) && (y < 170))
         {
-          m_btaudio->disconnect();
+          index = 3 * bt_list_page + 1;
+        }
+        else if ((y > 170) && (y < 240))
+        {
+          index = 3 * bt_list_page + 2;
+        }
+
+        if (index < BT_SCANNER_LIST_SIZE)
+        {
+          if (bt_list_entries[index].text)
+          {
+            if (bt_list_entries[index].is_selected)
+            {
+              bt_list_entries[index].is_selected = false;
+              m_btaudio->disconnect();
+            }
+            else
+            {
+              // unselect previous entry
+              for (uint8_t i = 0; i < BT_SCANNER_LIST_SIZE; i++)
+              {
+                if (bt_list_entries[i].is_selected == true)
+                {
+                  bt_list_entries[i].is_selected = false;
+                  m_btaudio->disconnect();
+                }
+              }
+
+              bt_list_entries[index].is_selected = true;
+              m_btaudio->connectTo(bt_list_entries[index].text);
+            }
+
+            m_display->drawListMenuEntries(bt_list_entries, bt_list_page, bt_list_pages);
+          }
         }
       }
-      else if ((y > 230) && (y < 300))
+
+      if ((y > 240) && (y < 300))
       {
         // back
+        for (uint8_t i = 0; i < BT_SCANNER_LIST_SIZE; i++)
+        {
+            if (bt_list_entries[i].text)
+            {
+              free(bt_list_entries[i].text);
+            }
+        }
+
         m_display->drawMainMenu();
         m_state = STATE_MAIN_MENU;
+      }
+    }
+    else if ((x > 386) && (x < 430))
+    {
+      if ((y > 30) && (y < 74))
+      {
+        if (bt_list_page > 0)
+        {
+          bt_list_page--;
+          m_display->drawListMenuEntries(bt_list_entries, bt_list_page, bt_list_pages);
+        }
+      }
+      else if ((y > 196) && (y < 240))
+      {
+        if (bt_list_page < (bt_list_pages - 1))
+        {
+          bt_list_page++;
+          m_display->drawListMenuEntries(bt_list_entries, bt_list_page, bt_list_pages);
+        }
       }
     }
   }  
@@ -427,7 +527,6 @@ void state_bluetooth_menu()
 
     lastMillis = curMillis;
   }
-
 }
 
 void loop()

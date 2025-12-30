@@ -76,6 +76,11 @@ bool BtScanner::insert(const char* ssid)
       Serial.print("i=");
       Serial.print(i);
       Serial.print(" ssid=");
+      Serial.print(ssid[0], HEX);
+      Serial.print(ssid[1], HEX);
+      Serial.print(ssid[2], HEX);
+      Serial.print(ssid[3], HEX);
+      Serial.print(" ssid=");
       Serial.print(ssid);
       Serial.println(" insert");
 #endif
@@ -137,6 +142,21 @@ void BtScanner::update()
       }
     }
   }
+  xSemaphoreGive(mutex);
+}
+
+struct bt_entry** BtScanner::getList()
+{
+  return list;
+}
+
+void BtScanner::lockList()
+{
+  xSemaphoreTake(mutex, portMAX_DELAY);
+}
+
+void BtScanner::unlockList()
+{
   xSemaphoreGive(mutex);
 }
 

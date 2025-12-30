@@ -431,7 +431,7 @@ void Display::drawMainMenuVolumeUp(uint16_t volume)
   menu.deleteSprite();
 }
 
-void Display::drawBluetoothMenu(void)
+void Display::drawListMenu(void)
 {
   TFT_eSprite menu = TFT_eSprite(m_tft);
   menu.createSprite(400, 280);
@@ -458,7 +458,7 @@ void Display::drawBluetoothMenu(void)
   menu.deleteSprite();
 }
 
-void Display::drawBluetoothMenuEntries(const char* entry1, const char* entry2, const char* entry3, const uint8_t page, const uint8_t pages)
+void Display::drawListMenuEntries(struct list_entry *entries, const uint8_t page, const uint8_t pages)
 {
   TFT_eSprite menu = TFT_eSprite(m_tft);
   menu.createSprite(380, 210);
@@ -477,25 +477,36 @@ void Display::drawBluetoothMenuEntries(const char* entry1, const char* entry2, c
   menu.loadFont("Roboto-Regular20", LittleFS);
   menu.setTextDatum(TL_DATUM);
 
-  if (entry1)
+  if (entries[3 * page + 0].text)
   {
-    renderPng((const char *)"/headphones.png", 10, 23, &menu);
-    menu.drawString(entry1, 44, 27);
+    renderPng((const char *)entries[3 * page + 0].icon, 10, 23, &menu);
+    menu.drawString(entries[3 * page + 0].text, 44, 27);
     menu.drawLine(10, 70, 326, 70, TFT_DARKGREY);
-    renderPng((const char *)"/ok.png", 292, 23, &menu);
+    if (entries[3 * page + 0].is_selected)
+    {
+      renderPng((const char *)"/ok.png", 292, 23, &menu);
+    }
   }
 
-  if (entry2)
+  if (entries[3 * page + 1].text)
   {
-    renderPng((const char *)"/headphones.png", 10, 93, &menu);
-    menu.drawString(entry2, 44, 97);
+    renderPng((const char *)entries[3 * page + 1].icon, 10, 93, &menu);
+    menu.drawString(entries[3 * page + 1].text, 44, 97);
     menu.drawLine(10, 140, 326, 140, TFT_DARKGREY);
+    if (entries[3 * page + 1].is_selected)
+    {
+      renderPng((const char *)"/ok.png", 292, 93, &menu);
+    }
   }
 
-  if (entry3)
+  if (entries[3 * page + 2].text)
   {
-    renderPng((const char *)"/headphones.png", 10, 163, &menu);
-    menu.drawString(entry3, 44, 167);
+    renderPng((const char *)entries[3 * page + 2].icon, 10, 163, &menu);
+    menu.drawString(entries[3 * page + 2].text, 44, 167);
+    if (entries[3 * page + 2].is_selected)
+    {
+      renderPng((const char *)"/ok.png", 292, 163, &menu);
+    }
   }
 
   menu.unloadFont();
