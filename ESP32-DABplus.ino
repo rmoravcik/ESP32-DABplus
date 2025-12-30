@@ -283,6 +283,9 @@ void state_main_menu()
   m_btaudio->update();
   m_btscanner->update();
 
+  m_display->drawMainMenuVolumeDown(volume);
+  m_display->drawMainMenuVolumeUp(volume);
+
   if (m_display->getTouch(&x, &y))
   {
     if ((x > 40) && (x < 440))
@@ -303,7 +306,7 @@ void state_main_menu()
         // volume down
         if ((x > 300) && (x < 350))
         {
-          if (volume > 0)
+          if (volume > VOLUME_MIN)
           {
             volume--;
             m_radio->setVolume(volume);
@@ -314,7 +317,7 @@ void state_main_menu()
         // volume up
         else if ((x > 370) && (x < 420))
         {
-          if (volume < 63)
+          if (volume < VOLUME_MAX)
           {
             volume++;
             m_radio->setVolume(volume);
@@ -369,7 +372,14 @@ void state_bluetooth_menu()
     {
       if ((y > 10) && (y < 220))
       {
-        m_btaudio->connectTo("BEACHBOOM");
+        if (m_btaudio->getState() == BT_AUDIO_STATE_DISCONNECTED)
+        {
+          m_btaudio->connectTo("BEACHBOOM");
+        }
+        else
+        {
+          m_btaudio->disconnect();
+        }
       }
       else if ((y > 230) && (y < 300))
       {
@@ -412,6 +422,20 @@ void loop()
       break;
     default:
       break;
+  }
+
+  // check if volume was not changed from speaker 
+  uint8_t btAudioVolume = m_btaudio->getVolume();
+  if (volume != btAudioVolume)
+  {
+    Serial.print("New volume=");
+    Serial.print(btAudioVolume);
+    Serial.print(" old volume=");
+    Serial.println(volume);
+    volume = btAudioVolume;
+    m_radio->setVolume(volume);
+    m_btaudio->setVolume(volume);
+    preferences.putUChar("volume", volume);
   }
 
 #ifdef DEBUG_HEAP

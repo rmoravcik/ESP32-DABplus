@@ -3,6 +3,8 @@
 #include "ESP32-DABplus.h"
 #include "display.h"
 
+// #define SLIDESHOW_DEBUG
+
 TFT_eSPI *Display::m_tft = NULL;
 
 TFT_eSprite *Display::m_serviceDataSprite = NULL;
@@ -375,20 +377,60 @@ void Display::drawMainMenu()
   menu.drawString("Vyhledat", 54, 27);
   menu.drawString("Připojit", 54, 97);
   menu.drawString("Hlasitost", 54, 167);
-  menu.drawString("Spět", 54, 237);
+  menu.drawString("Zpět", 54, 237);
 
   menu.unloadFont();
-
-  menu.fillCircle(285, 175, 25, TFT_DARKGREY);
-  menu.fillRect(272, 173, 26, 4, TFT_WHITE);
-
-  menu.fillCircle(355, 175, 25, TFT_DARKGREY);
-  menu.fillRect(353, 162, 4, 26, TFT_WHITE);
-  menu.fillRect(342, 173, 26, 4, TFT_WHITE);
 
   menu.pushSprite(40, 20);
   menu.deleteSprite();
 }
+
+void Display::drawMainMenuVolumeDown(uint16_t volume)
+{
+  TFT_eSprite menu = TFT_eSprite(m_tft);
+  menu.createSprite(51, 51);
+
+  menu.fillRect(0, 0, 51, 51, TFT_WHITE);
+
+  if (volume > VOLUME_MIN)
+  {
+    menu.fillCircle(25, 25, 25, TFT_DARKGREY);
+    menu.fillRect(12, 23, 26, 4, TFT_WHITE);
+  }
+  else
+  {
+    menu.fillCircle(25, 25, 25, TFT_LIGHTGREY);
+    menu.fillRect(12, 23, 26, 4, TFT_WHITE);
+  }
+
+  menu.pushSprite(300, 170);
+  menu.deleteSprite();
+}
+
+void Display::drawMainMenuVolumeUp(uint16_t volume)
+{
+  TFT_eSprite menu = TFT_eSprite(m_tft);
+  menu.createSprite(51, 51);
+
+  menu.fillRect(0, 0, 51, 51, TFT_WHITE);
+
+  if (volume < VOLUME_MAX)
+  {
+    menu.fillCircle(25, 25, 25, TFT_DARKGREY);
+    menu.fillRect(23, 12, 4, 26, TFT_WHITE);
+    menu.fillRect(12, 23, 26, 4, TFT_WHITE);
+  }
+  else
+  {
+    menu.fillCircle(25, 25, 25, TFT_LIGHTGREY);
+    menu.fillRect(23, 12, 4, 26, TFT_WHITE);
+    menu.fillRect(12, 23, 26, 4, TFT_WHITE);
+  }
+
+  menu.pushSprite(370, 170);
+  menu.deleteSprite();
+}
+
 
 void Display::drawBluetoothMenu(void)
 {
@@ -409,7 +451,7 @@ void Display::drawBluetoothMenu(void)
   menu.loadFont("Roboto-Regular20", LittleFS);
   menu.setTextDatum(TL_DATUM);
 
-  menu.drawString("Spět", 54, 237);
+  menu.drawString("Zpět", 54, 237);
 
   menu.unloadFont();
 
@@ -459,11 +501,15 @@ bool Display::isJpegFile(uint8_t* data, uint32_t size)
 {
   if ((data[0] == 0xFF) && (data[1] == 0xD8) && (data[2] == 0xFF))
   {
+#ifdef SLIDESHOW_DEBUG
     Serial.println("is JPEG");
+#endif
     return true;
   }
 
+#ifdef SLIDESHOW_DEBUG
     Serial.println("is PNG");
+#endif
   return false;
 }
 

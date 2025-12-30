@@ -30,4 +30,7 @@ enum State
 
 #define SI4684_SPI_FREQ   8000000
 
+#define VOLUME_MIN         0
+#define VOLUME_MAX        63
+
 #endif

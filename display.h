@@ -33,6 +33,8 @@ public:
   void drawSlideShow(uint8_t* data, uint32_t size, TFT_eSprite *sprite = NULL);
   void drawRdsText(String text);
   void drawMainMenu(void);
+  void drawMainMenuVolumeDown(uint16_t volume);
+  void drawMainMenuVolumeUp(uint16_t volume);
   void drawBluetoothMenu(void);
 
   static TFT_eSPI *m_tft;

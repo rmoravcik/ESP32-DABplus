@@ -24,12 +24,16 @@ public:
   void update();
 
   void setVolume(uint8_t vol);
+  uint8_t getVolume();
   void connectTo(String ssid);
+  void disconnect();
   bt_audio_state getState();
 
   static int32_t get_data_frames(Frame *frame, int32_t frame_count);
   static void connection_state_changed(esp_a2d_connection_state_t state, void *ptr);
   static bool isValid(const char* ssid, esp_bd_addr_t address, int rssi);
+  static void button_handler(uint8_t id, bool isReleased);
+
 
   static BtScanner *m_btscanner;
   static BluetoothA2DPSource *m_a2dp_src;

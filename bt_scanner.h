@@ -26,11 +26,14 @@ public:
   virtual ~BtScanner();
 
   bool insert(const char* ssid);
+  void setState(const char* ssid, bt_entry_state state);
   void update();
   void printAvailable();
 
  private:
   struct bt_entry* list[BT_SCANNER_LIST_SIZE];
+  uint8_t count;
+  const char* stateToString(bt_entry_state state);
 };
 
 #endif

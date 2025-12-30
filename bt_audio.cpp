@@ -38,6 +38,7 @@ BtAudio::BtAudio(BtScanner *btscanner)
   m_a2dp_src->set_auto_reconnect(false);
   m_a2dp_src->set_on_connection_state_changed(connection_state_changed);
   m_a2dp_src->set_data_callback_in_frames(get_data_frames);
+  m_a2dp_src->set_avrc_passthru_command_callback(button_handler);
 
   m_a2dp_src->start();
 }
@@ -46,7 +47,9 @@ BtAudio::~BtAudio()
 {
 }
 
-void BtAudio::update() {
+void BtAudio::update()
+{
+
 }
 
 int32_t BtAudio::get_data_frames(Frame *frame, int32_t frame_count)
@@ -70,14 +73,21 @@ bt_audio_state BtAudio::getState()
 // for esp_a2d_connection_state_t see https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/bluetooth/esp_a2dp.html#_CPPv426esp_a2d_connection_state_t
 void BtAudio::connection_state_changed(esp_a2d_connection_state_t state, void *ptr)
 {
-  Serial.print(F("BT State: "));
+  Serial.print(F("BT Connection state: "));
   Serial.println(m_a2dp_src->to_str(state));
 
   switch (state) {
+    case ESP_A2D_CONNECTION_STATE_CONNECTING:
+      m_btscanner->insert(m_ssid.c_str());
+      m_btscanner->setState(m_ssid.c_str(), BT_ENTRY_STATE_CONNECTING);
+      break;
     case ESP_A2D_CONNECTION_STATE_CONNECTED:
+      m_btscanner->setState(m_ssid.c_str(), BT_ENTRY_STATE_CONNECTED);
       m_a2dp_src->set_volume(m_volume);
       break;
+    case ESP_A2D_CONNECTION_STATE_DISCONNECTED:
     default:
+      m_btscanner->setState(m_ssid.c_str(), BT_ENTRY_STATE_DISCONNECTED);
       break;
   }
 }
@@ -87,7 +97,7 @@ void BtAudio::connection_state_changed(esp_a2d_connection_state_t state, void *p
 bool BtAudio::isValid(const char *ssid, esp_bd_addr_t address, int rssi)
 {
   if (m_ssid.equals(ssid)) {
-    Serial.print(F("BT Found: "));
+    Serial.print(F("BT Found SSID: "));
     Serial.println(m_ssid);
     return true;
   }
@@ -99,14 +109,31 @@ bool BtAudio::isValid(const char *ssid, esp_bd_addr_t address, int rssi)
   return false;
 }
 
+// gets called when button on bluetooth speaker is pressed
+void BtAudio::button_handler(uint8_t id, bool isReleased)
+{
+  if (isReleased)
+  {
+    Serial.print("Button ID=");
+    Serial.print(id);
+    Serial.println(" released");
+  }
+}
+
 void BtAudio::setVolume(uint8_t vol)
 {
-  if (vol > 63) {
-    vol = 63;
+  if (vol > VOLUME_MAX)
+  {
+    vol = VOLUME_MAX;
   }
   m_volume = vol * 2;
 
   m_a2dp_src->set_volume(m_volume);
+}
+
+uint8_t BtAudio::getVolume()
+{
+  return m_a2dp_src->get_volume() / 2;
 }
 
 void BtAudio::connectTo(String ssid)
@@ -114,4 +141,10 @@ void BtAudio::connectTo(String ssid)
   m_ssid = ssid;
   m_a2dp_src->start(ssid.c_str());
   m_a2dp_src->set_connected(true);
+}
+
+void BtAudio::disconnect()
+{
+  m_ssid = "";
+  m_a2dp_src->set_connected(false);
 }
