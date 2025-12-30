@@ -187,6 +187,9 @@ void tuneStation(uint8_t index)
 void setup()
 {
   Serial.begin(115200);
+  Serial.print("ESP32-DABplus version ");
+  Serial.println(VERSION);
+
   check_mem_usage();
 
   init_gpio();
@@ -314,13 +317,13 @@ void state_main_menu()
             bt_list_entries[j].text = (char *) malloc(strlen(bt_list[i]->ssid) + 1);
             strcpy(bt_list_entries[j].text, bt_list[i]->ssid);
             bt_list_entries[j].icon = "/headphones.png";
-            if (bt_list[i]->state == BT_ENTRY_STATE_CONNECTED)
+            if (bt_list[i]->state == BT_ENTRY_STATE_DISCONNECTED)
             {
-              bt_list_entries[j].is_selected = true;
+              bt_list_entries[j].is_selected = false;
             }
             else
             {
-              bt_list_entries[j].is_selected = false;
+              bt_list_entries[j].is_selected = true;
             }
             j++;
           }

@@ -99,6 +99,9 @@ bool BtAudio::isValid(const char *ssid, esp_bd_addr_t address, int rssi)
   if (m_ssid.equals(ssid)) {
     Serial.print(F("BT Found SSID: "));
     Serial.println(m_ssid);
+
+    m_btscanner->insert(m_ssid.c_str());
+    m_btscanner->setState(m_ssid.c_str(), BT_ENTRY_STATE_CONNECTING);
     return true;
   }
 
@@ -151,4 +154,5 @@ void BtAudio::disconnect()
   m_btscanner->setState(m_ssid.c_str(), BT_ENTRY_STATE_DISCONNECTED);
   m_ssid = "";
   m_a2dp_src->set_connected(false);
+  m_a2dp_src->start();
 }
