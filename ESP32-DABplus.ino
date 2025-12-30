@@ -297,8 +297,8 @@ void state_main_menu()
       }
       else if ((y > 90) && (y < 160))
       {
-        // connect to bluetooth
         m_display->drawBluetoothMenu();
+        m_display->drawBluetoothMenuEntries("BT13", "MID", "BEACHBOOM", 1, 3);
         m_state = STATE_BLUETOOTH_MENU;
       }
       else if ((y > 160) && (y < 230))

@@ -36,6 +36,7 @@ public:
   void drawMainMenuVolumeDown(uint16_t volume);
   void drawMainMenuVolumeUp(uint16_t volume);
   void drawBluetoothMenu(void);
+  void drawBluetoothMenuEntries(const char* entry1, const char* entry2, const char* entry3, const uint8_t page, const uint8_t pages);
 
   static TFT_eSPI *m_tft;
   static TFT_eSprite *m_statusBarSprite;

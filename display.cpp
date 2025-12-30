@@ -459,6 +459,52 @@ void Display::drawBluetoothMenu(void)
   menu.deleteSprite();
 }
 
+void Display::drawBluetoothMenuEntries(const char* entry1, const char* entry2, const char* entry3, const uint8_t page, const uint8_t pages)
+{
+  TFT_eSprite menu = TFT_eSprite(m_tft);
+  menu.createSprite(380, 210);
+
+  uint32_t scrollbarHeight = 122 / pages;
+
+  menu.fillRect(0, 0, 380, 210, TFT_WHITE);
+  menu.drawRect(0, 0, 380, 210, TFT_DARKGREY);
+
+  menu.fillRoundRect(353, 44 + (page * scrollbarHeight), 10, scrollbarHeight, 5, TFT_BLACK);
+  renderPng((const char *)"/up.png", 346, 10, &menu);
+  renderPng((const char *)"/down.png", 346, 176, &menu);
+
+  menu.setTextColor(TFT_BLACK, TFT_WHITE);
+  menu.setTextSize(1);
+  menu.loadFont("Roboto-Regular20", LittleFS);
+  menu.setTextDatum(TL_DATUM);
+
+  if (entry1)
+  {
+    renderPng((const char *)"/headphones.png", 10, 23, &menu);
+    menu.drawString(entry1, 44, 27);
+    menu.drawLine(10, 70, 326, 70, TFT_DARKGREY);
+    renderPng((const char *)"/ok.png", 292, 23, &menu);
+  }
+
+  if (entry2)
+  {
+    renderPng((const char *)"/headphones.png", 10, 93, &menu);
+    menu.drawString(entry2, 44, 97);
+    menu.drawLine(10, 140, 326, 140, TFT_DARKGREY);
+  }
+
+  if (entry3)
+  {
+    renderPng((const char *)"/headphones.png", 10, 163, &menu);
+    menu.drawString(entry3, 44, 167);
+  }
+
+  menu.unloadFont();
+
+  menu.pushSprite(50, 30);
+  menu.deleteSprite();
+}
+
 void Display::drawControls(TFT_eSprite *sprite)
 {
   if (sprite)
