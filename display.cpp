@@ -364,7 +364,7 @@ void Display::drawMainMenu()
   menu.drawLine(10, 140, 390, 140, TFT_DARKGREY);
   menu.drawLine(10, 210, 390, 210, TFT_DARKGREY);
 
-  renderPng((const char *)"/search.png", 20, 23, &menu);
+  renderPng((const char *)"/radio.png", 20, 23, &menu);
   renderPng((const char *)"/bluetooth.png", 20, 93, &menu);
   renderPng((const char *)"/volume.png", 20, 163, &menu);
   renderPng((const char *)"/back.png", 20, 233, &menu);
@@ -374,7 +374,7 @@ void Display::drawMainMenu()
   menu.loadFont("Roboto-Regular20", LittleFS);
   menu.setTextDatum(TL_DATUM);
 
-  menu.drawString("Vyhledat", 54, 27);
+  menu.drawString("Stanice", 54, 27);
   menu.drawString("Připojit", 54, 97);
   menu.drawString("Hlasitost", 54, 167);
   menu.drawString("Zpět", 54, 237);
@@ -430,7 +430,6 @@ void Display::drawMainMenuVolumeUp(uint16_t volume)
   menu.pushSprite(370, 170);
   menu.deleteSprite();
 }
-
 
 void Display::drawBluetoothMenu(void)
 {
@@ -502,6 +501,37 @@ void Display::drawBluetoothMenuEntries(const char* entry1, const char* entry2, c
   menu.unloadFont();
 
   menu.pushSprite(50, 30);
+  menu.deleteSprite();
+}
+
+void Display::drawRadioMenu()
+{
+  TFT_eSprite menu = TFT_eSprite(m_tft);
+  menu.createSprite(400, 280);
+
+  menu.fillRoundRect(0, 0, 400, 280, 10, TFT_WHITE);
+  menu.drawRoundRect(0, 0, 400, 280, 10, TFT_DARKGREY);
+  menu.drawLine(10, 0, 390, 0, TFT_DARKGREY);
+  menu.drawLine(10, 70, 390, 70, TFT_DARKGREY);
+  menu.drawLine(10, 140, 390, 140, TFT_DARKGREY);
+  menu.drawLine(10, 210, 390, 210, TFT_DARKGREY);
+
+  renderPng((const char *)"/list.png", 20, 23, &menu);
+  renderPng((const char *)"/search.png", 20, 93, &menu);
+  renderPng((const char *)"/back.png", 20, 233, &menu);
+
+  menu.setTextColor(TFT_BLACK, TFT_WHITE);
+  menu.setTextSize(1);
+  menu.loadFont("Roboto-Regular20", LittleFS);
+  menu.setTextDatum(TL_DATUM);
+
+  menu.drawString("Seznam", 54, 27);
+  menu.drawString("Vyhledat", 54, 97);
+  menu.drawString("Zpět", 54, 237);
+
+  menu.unloadFont();
+
+  menu.pushSprite(40, 20);
   menu.deleteSprite();
 }
 

@@ -35,6 +35,7 @@ public:
   void drawMainMenu(void);
   void drawMainMenuVolumeDown(uint16_t volume);
   void drawMainMenuVolumeUp(uint16_t volume);
+  void drawRadioMenu(void);
   void drawBluetoothMenu(void);
   void drawBluetoothMenuEntries(const char* entry1, const char* entry2, const char* entry3, const uint8_t page, const uint8_t pages);
 

@@ -292,8 +292,8 @@ void state_main_menu()
     {
       if ((y > 20) && (y < 90))
       {
-        // scan radio stations
-        m_state = STATE_SCANNING;
+        m_display->drawRadioMenu();
+        m_state = STATE_RADIO_MENU;
       }
       else if ((y > 90) && (y < 160))
       {
@@ -331,6 +331,36 @@ void state_main_menu()
         // exit
         m_display->drawReceivingScreen();
         m_state = STATE_RECEIVING;
+      }
+    }
+  }
+}
+
+void state_radio_menu()
+{
+  uint16_t x;
+  uint16_t y;
+
+  m_btaudio->update();
+  m_btscanner->update();
+
+  if (m_display->getTouch(&x, &y))
+  {
+    if ((x > 40) && (x < 440))
+    {
+      if ((y > 20) && (y < 90))
+      {
+        m_state = STATE_STATION_LIST;
+      }
+      else if ((y > 90) && (y < 160))
+      {
+        m_state = STATE_SCANNING;
+      }
+      else if ((y > 230) && (y < 300))
+      {
+        // exit
+        m_display->drawMainMenu();
+        m_state = STATE_MAIN_MENU;
       }
     }
   }
@@ -420,6 +450,8 @@ void loop()
     case STATE_BLUETOOTH_MENU:
       state_bluetooth_menu();
       break;
+    case STATE_RADIO_MENU:
+      state_radio_menu();
     default:
       break;
   }
