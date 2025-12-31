@@ -313,7 +313,8 @@ void state_main_menu()
       }
       else if ((y > 90) && (y < 160))
       {
-        uint8_t j = 0;
+        uint8_t index = 0;
+        uint8_t selected_index;
         struct bt_entry** bt_list = m_btscanner->getList();
 
         memset(bt_list_entries, 0, sizeof(struct list_entry) * BT_SCANNER_LIST_SIZE);
@@ -323,28 +324,34 @@ void state_main_menu()
         {
           if (bt_list[i] != NULL)
           {
-            bt_list_entries[j].text = (char *) malloc(strlen(bt_list[i]->ssid) + 1);
-            strcpy(bt_list_entries[j].text, bt_list[i]->ssid);
-            bt_list_entries[j].icon = "/headphones.png";
+            bt_list_entries[index].text = (char *) malloc(strlen(bt_list[i]->ssid) + 1);
+            strcpy(bt_list_entries[index].text, bt_list[i]->ssid);
+            bt_list_entries[index].icon = "/headphones.png";
             if (bt_list[i]->state == BT_ENTRY_STATE_DISCONNECTED)
             {
-              bt_list_entries[j].is_selected = false;
+              bt_list_entries[index].is_selected = false;
             }
             else
             {
-              bt_list_entries[j].is_selected = true;
+              bt_list_entries[index].is_selected = true;
+              selected_index = index;
             }
-            j++;
+            index++;
           }
         }
         m_btscanner->unlockList();
 
         bt_list_pages = 1;
-        if (j > 0)
+        if (index > 0)
         {
-          bt_list_pages = ((j - 1) / 3) + 1;
+          bt_list_pages = ((index - 1) / 3) + 1;
         }
+
         bt_list_page = 0;
+        if (selected_index > 0)
+        {
+          bt_list_page = selected_index / 3;
+        }
 
         m_display->drawListMenu();
         m_display->drawListMenuEntries(bt_list_entries, bt_list_page, bt_list_pages);
@@ -400,32 +407,39 @@ void state_radio_menu()
     {
       if ((y > 20) && (y < 90))
       {
-        uint16_t j = 0;
+        uint16_t index = 0;
+        uint16_t selected_index = 0;
 
         memset(station_list_entries, 0, sizeof(struct list_entry) * STATION_LIST_SIZE);
 
         for (uint16_t i = 0; i < stationCount; i++)
         {
-          station_list_entries[j].text = (char *) malloc(strlen(stationList[i].label.c_str()) + 1);
-          strcpy(station_list_entries[j].text, stationList[i].label.c_str());
-          station_list_entries[j].icon = "/radio.png";
+          station_list_entries[index].text = (char *) malloc(strlen(stationList[i].label.c_str()) + 1);
+          strcpy(station_list_entries[index].text, stationList[i].label.c_str());
+          station_list_entries[index].icon = "/radio.png";
           if (i == currentStation)
           {
-            station_list_entries[j].is_selected = true;
+            station_list_entries[index].is_selected = true;
+            selected_index = index;
           }
           else
           {
-            station_list_entries[j].is_selected = false;
+            station_list_entries[index].is_selected = false;
           }
-          j++;
+          index++;
         }
 
         station_list_pages = 1;
-        if (j > 0)
+        if (index > 0)
         {
-          station_list_pages = ((j - 1) / 3) + 1;
+          station_list_pages = ((index - 1) / 3) + 1;
         }
+
         station_list_page = 0;
+        if (selected_index > 0)
+        {
+          station_list_page = selected_index / 3;
+        }
 
         m_display->drawListMenu();
         m_display->drawListMenuEntries(station_list_entries, station_list_page, station_list_pages);
