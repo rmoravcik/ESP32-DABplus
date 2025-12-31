@@ -32,10 +32,10 @@ public:
   void drawReceivingScreen();
   void drawScanningScreen(uint8_t progress, uint8_t stations);
 
-  void drawTime(uint8_t hour, uint8_t min);
-  void drawBtIndicator(bt_indicator_state state);
-  void drawSignalIndicator(int8_t strength);
-  void drawStationLabel(String label);
+  void drawTime(uint8_t hour, uint8_t min, bool menuVisible);
+  void drawBtIndicator(bt_indicator_state state, bool menuVisible);
+  void drawSignalIndicator(int8_t strength, bool menuVisible);
+  void drawStationLabel(String label, bool menuVisible);
   void drawSlideShow(uint8_t* data, uint32_t size, TFT_eSprite *sprite = NULL);
   void drawRdsText(String text);
   void drawMainMenu(void);

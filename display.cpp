@@ -62,11 +62,11 @@ Display::Display()
   m_serviceDataSprite->setScrollRect(0, 0, 320, 30);
   m_serviceDataSprite->loadFont("Roboto-Regular20", LittleFS);
 
-  drawTime(12, 0);
+  drawTime(12, 0, false);
   drawSlideShow(NULL, 0);
   drawRdsText(m_welcomeText);
-  drawBtIndicator(BT_INDICATOR_STATE_DISCONNECTED);
-  drawSignalIndicator(0);
+  drawBtIndicator(BT_INDICATOR_STATE_DISCONNECTED, false);
+  drawSignalIndicator(0, false);
   drawControls();
 }
 
@@ -175,7 +175,7 @@ void Display::drawScanningScreen(uint8_t progress, uint8_t stations)
   }
 }
 
-void Display::drawTime(uint8_t hour, uint8_t min)
+void Display::drawTime(uint8_t hour, uint8_t min, bool menuVisible)
 {
   char time[6];
 
@@ -184,13 +184,23 @@ void Display::drawTime(uint8_t hour, uint8_t min)
 //  Serial.print("Time: ");
 //  Serial.println(time);
 
+  if (menuVisible == true)
+  {
+    m_tft->setViewport(0, 0, 480, 20);
+  }
+
   m_statusBarSprite->fillRect(0, 0, 60, 25, STATUS_BAR_BG_COLOR);
   m_statusBarSprite->setTextDatum(TL_DATUM);
   m_statusBarSprite->drawString(time, 5, 6);
   m_statusBarSprite->pushSprite(0, 0);
+
+  if (menuVisible == true)
+  {
+    m_tft->resetViewport();
+  }
 }
 
-void Display::drawBtIndicator(bt_indicator_state state)
+void Display::drawBtIndicator(bt_indicator_state state, bool menuVisible)
 {
   uint16_t x = 436, y = 6;
   static uint32_t lastColour = TFT_DARKGREY;
@@ -219,6 +229,11 @@ void Display::drawBtIndicator(bt_indicator_state state)
 
   lastColour = colour;
 
+  if (menuVisible == true)
+  {
+    m_tft->setViewport(0, 0, 480, 20);
+  }
+
   m_statusBarSprite->fillRect(x + 3, y, 2, 11, colour);
   m_statusBarSprite->fillRect(x, y + 2, 2, 2, colour);
   m_statusBarSprite->fillRect(x, y + 7, 2, 2, colour);
@@ -232,10 +247,14 @@ void Display::drawBtIndicator(bt_indicator_state state)
   m_statusBarSprite->fillRect(x + 5, y + 10, 1, 1, colour);
   m_statusBarSprite->pushSprite(0, 0);
 
+  if (menuVisible == true)
+  {
+    m_tft->resetViewport();
+  }
 }
 
 
-void Display::drawSignalIndicator(int8_t strength)
+void Display::drawSignalIndicator(int8_t strength, bool menuVisible)
 {
   uint16_t x = 451, y = 14;
   uint8_t level = 0; // 0..5
@@ -263,6 +282,11 @@ void Display::drawSignalIndicator(int8_t strength)
     level = 5;
   }
 
+  if (menuVisible == true)
+  {
+    m_tft->setViewport(0, 0, 480, 20);
+  }
+
   for (uint8_t i = 0; i < 5; i++)
   {
     if (i < level)
@@ -276,23 +300,41 @@ void Display::drawSignalIndicator(int8_t strength)
   }
 
   m_statusBarSprite->pushSprite(0, 0);
+
+  if (menuVisible == true)
+  {
+    m_tft->resetViewport();
+  }
 }
 
-void Display::drawStationLabel(String label)
+void Display::drawStationLabel(String label, bool menuVisible)
 {
   if (label.length() == 0)
   {
     return;
   }
 
-  // Reset slideshow and rds text
-  drawSlideShow(NULL, 0);
-  drawRdsText(m_welcomeText);
+  if (menuVisible == false)
+  {
+    // Reset slideshow and rds text
+    drawSlideShow(NULL, 0);
+    drawRdsText(m_welcomeText);
+  }
+
+  if (menuVisible == true)
+  {
+    m_tft->setViewport(0, 0, 480, 20);
+  }
 
   m_statusBarSprite->fillRect(80, 0, 240, 25, STATUS_BAR_BG_COLOR);
   m_statusBarSprite->setTextDatum(TC_DATUM);
   m_statusBarSprite->drawString(label, 240, 6);
   m_statusBarSprite->pushSprite(0, 0);
+
+  if (menuVisible == true)
+  {
+    m_tft->resetViewport();
+  }
 }
 
 void Display::drawSlideShow(uint8_t* data, uint32_t size, TFT_eSprite *sprite)

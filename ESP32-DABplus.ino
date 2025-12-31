@@ -17,6 +17,7 @@ Display *m_display = NULL;
 Radio *m_radio = NULL;
 
 uint8_t lastMin = -1;
+#define DEBUG_HEAP
 #ifdef DEBUG_HEAP
 unsigned long lastMillisMain = 0;
 #endif
@@ -186,10 +187,7 @@ void tuneStation(uint8_t index)
 {
   Serial.print(F("Tunning to station "));
   Serial.println(stationList[index].label);
-  if (m_state != STATE_STATION_LIST)
-  {
-    m_display->drawStationLabel(stationList[index].label);
-  }
+  m_display->drawStationLabel(stationList[index].label, m_state != STATE_RECEIVING ? true : false);
   m_radio->tuneStation(stationList[index].freqIndex, stationList[index].serviceId, stationList[index].compId);
 }
 
@@ -230,9 +228,31 @@ void setup()
   m_btaudio->setVolume(volume);
 }
 
+void one_sec_job()
+{
+    uint8_t hour = 0, min = lastMin;
+
+    m_radio->getTime(&hour, &min);
+    if (min != lastMin)
+    {
+      m_display->drawTime(hour, min, m_state != STATE_RECEIVING ? true : false);
+      lastMin = min;
+    }
+
+    m_display->drawBtIndicator((bt_indicator_state)m_btaudio->getState(), m_state != STATE_RECEIVING ? true : false);
+    m_display->drawSignalIndicator(m_radio->getSignalStrength(), m_state != STATE_RECEIVING ? true : false);
+}
+
+void ten_sec_job()
+{
+  if (m_state == STATE_BLUETOOTH_MENU)
+  {
+    m_btscanner->printAvailable();
+  }
+}
+
 void state_receiving()
 {
-  uint8_t hour = 0, min = lastMin;
   unsigned long curMillis = millis();
   uint16_t x;
   uint16_t y;
@@ -277,22 +297,14 @@ void state_receiving()
   // one second jobs
   if ((curMillis - lastMillis) >= 1000)
   {
-    m_radio->getTime(&hour, &min);
-    if (min != lastMin)
-    {
-      m_display->drawTime(hour, min);
-      lastMin = min;
-    }
-
-    m_display->drawBtIndicator((bt_indicator_state)m_btaudio->getState());
-    m_display->drawSignalIndicator(m_radio->getSignalStrength());
-
+    one_sec_job();
     lastMillis = curMillis;
   }
 }
       
 void state_main_menu()
 {
+  unsigned long curMillis = millis();
   uint16_t x;
   uint16_t y;
 
@@ -391,10 +403,18 @@ void state_main_menu()
       }
     }
   }
+
+  // one second jobs
+  if ((curMillis - lastMillis) >= 1000)
+  {
+    one_sec_job();
+    lastMillis = curMillis;
+  }
 }
 
 void state_radio_menu()
 {
+  unsigned long curMillis = millis();
   uint16_t x;
   uint16_t y;
 
@@ -457,6 +477,13 @@ void state_radio_menu()
       }
     }
   }
+
+  // one second jobs
+  if ((curMillis - lastMillis) >= 1000)
+  {
+    one_sec_job();
+    lastMillis = curMillis;
+  }
 }
 
 void state_scanning()
@@ -483,6 +510,7 @@ void state_scanning()
 void state_bluetooth_menu()
 {
   unsigned long curMillis = millis();
+  uint8_t secCounter = 0;
   uint16_t x;
   uint16_t y;
 
@@ -575,10 +603,16 @@ void state_bluetooth_menu()
     }
   }  
 
-  // ten seconds jobs
-  if ((curMillis - lastMillis) >= 10000)
+  // one seconds jobs
+  if ((curMillis - lastMillis) >= 1000)
   {
-    m_btscanner->printAvailable();
+    one_sec_job();
+
+    secCounter++;
+    if (secCounter >= 10) {
+      secCounter = 0;
+      ten_sec_job();
+    }
 
     lastMillis = curMillis;
   }
@@ -586,6 +620,7 @@ void state_bluetooth_menu()
 
 void state_station_menu()
 {
+  unsigned long curMillis = millis();
   uint16_t x;
   uint16_t y;
 
@@ -673,6 +708,13 @@ void state_station_menu()
         }
       }
     }
+  }
+
+  // one second jobs
+  if ((curMillis - lastMillis) >= 1000)
+  {
+    one_sec_job();
+    lastMillis = curMillis;
   }
 }
 

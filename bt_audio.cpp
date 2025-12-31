@@ -147,6 +147,9 @@ uint8_t BtAudio::getVolume()
 
 void BtAudio::connectTo(String ssid)
 {
+  Serial.print("BtAudio::connect() ssid=");
+  Serial.println(ssid);
+
   m_ssid = ssid;
   m_a2dp_src->start(ssid.c_str());
   m_a2dp_src->set_connected(true);
@@ -157,6 +160,9 @@ void BtAudio::connectTo(String ssid)
 
 void BtAudio::disconnect()
 {
+  Serial.print("BtAudio::disconnect() ssid=");
+  Serial.println(m_ssid);
+
   m_btscanner->setState(m_ssid.c_str(), BT_ENTRY_STATE_DISCONNECTED);
   m_ssid = "";
   m_a2dp_src->set_connected(false);
