@@ -17,7 +17,7 @@ Display *m_display = NULL;
 Radio *m_radio = NULL;
 
 uint8_t lastMin = -1;
-#define DEBUG_HEAP
+//#define DEBUG_HEAP
 #ifdef DEBUG_HEAP
 unsigned long lastMillisMain = 0;
 #endif
@@ -25,15 +25,15 @@ unsigned long lastMillis = 0;
 
 struct StationInfo
 {
-  uint8_t freqIndex;
+  uint8_t  freqIndex;
   uint32_t serviceId;
   uint32_t compId;
-  String label;
+  char*    label;
 };
 
 #define STATION_LIST_SIZE 100
 
-StationInfo stationList[STATION_LIST_SIZE];
+struct StationInfo* stationList = NULL;
 uint8_t stationCount = 0;
 uint8_t currentStation = 0;
 
@@ -108,7 +108,12 @@ void stationFound(uint8_t freqIndex, uint32_t serviceId, uint32_t compId, String
   stationList[stationCount].freqIndex = freqIndex;
   stationList[stationCount].serviceId = serviceId;
   stationList[stationCount].compId = compId;
-  stationList[stationCount].label = label;
+  if (stationList[stationCount].label != NULL)
+  {
+    free (stationList[stationCount].label);
+  }
+  stationList[stationCount].label = (char *)ps_malloc(label.length() + 1);
+  strcpy(stationList[stationCount].label, label.c_str());
   stationCount++;
 
   m_display->drawScanningScreen(freqIndex * 100/DAB_FREQS, stationCount);
@@ -153,7 +158,8 @@ void loadStationList(void)
       stationList[stationCount].freqIndex = freqIndex;
       stationList[stationCount].serviceId = serviceId;
       stationList[stationCount].compId = compId;
-      stationList[stationCount].label = label;
+      stationList[stationCount].label = (char *)ps_malloc(label.length() + 1);
+      strcpy(stationList[stationCount].label, label.c_str());
       stationCount++;
     }
   }
@@ -177,7 +183,7 @@ void saveStationList(void)
 
   for (uint8_t i = 0; i < stationCount; i++)
   {
-    file.printf("%u;%u;%u;%s;\n", stationList[i].freqIndex, stationList[i].serviceId, stationList[i].compId, stationList[i].label.c_str());
+    file.printf("%u;%u;%u;%s;\n", stationList[i].freqIndex, stationList[i].serviceId, stationList[i].compId, stationList[i].label);
   }
 
   file.close();
@@ -203,6 +209,13 @@ void setup()
   init_psram();
 
   LittleFS.begin();
+
+  stationList = (struct StationInfo *) ps_malloc(sizeof(struct StationInfo) * STATION_LIST_SIZE);
+  if (stationList == NULL)
+  {
+    Serial.println("ERROR: Failed to allocate stationList!");
+  }
+  memset(stationList, 0, sizeof(struct StationInfo) * STATION_LIST_SIZE);
 
   m_btscanner = new BtScanner();
   m_btaudio = new BtAudio(m_btscanner);
@@ -446,8 +459,8 @@ void state_radio_menu()
 
         for (uint16_t i = 0; i < stationCount; i++)
         {
-          station_list_entries[index].text = (char *) ps_malloc(strlen(stationList[i].label.c_str()) + 1);
-          strcpy(station_list_entries[index].text, stationList[i].label.c_str());
+          station_list_entries[index].text = (char *) ps_malloc(strlen(stationList[i].label) + 1);
+          strcpy(station_list_entries[index].text, stationList[i].label);
           station_list_entries[index].icon = "/radio.png";
           if (i == currentStation)
           {
