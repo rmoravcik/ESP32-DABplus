@@ -41,11 +41,11 @@ uint8_t volume = 25;
 
 Preferences preferences;
 
-struct list_entry bt_list_entries[BT_SCANNER_LIST_SIZE];
+struct list_entry* bt_list_entries = NULL;
 uint8_t bt_list_pages = 0;
 uint8_t bt_list_page = 0;
 
-struct list_entry station_list_entries[STATION_LIST_SIZE];
+struct list_entry* station_list_entries = NULL;
 uint8_t station_list_pages = 0;
 uint8_t station_list_page = 0;
 
@@ -329,6 +329,12 @@ void state_main_menu()
         uint8_t selected_index;
         struct bt_entry** bt_list = m_btscanner->getList();
 
+        bt_list_entries = (struct list_entry *) ps_malloc(sizeof(struct list_entry) * BT_SCANNER_LIST_SIZE);
+        if (bt_list_entries == NULL)
+        {
+          Serial.println("ERROR: Failed to allocate bt_list_entries!");
+        }
+
         memset(bt_list_entries, 0, sizeof(struct list_entry) * BT_SCANNER_LIST_SIZE);
 
         m_btscanner->lockList();
@@ -336,7 +342,7 @@ void state_main_menu()
         {
           if (bt_list[i] != NULL)
           {
-            bt_list_entries[index].text = (char *) malloc(strlen(bt_list[i]->ssid) + 1);
+            bt_list_entries[index].text = (char *) ps_malloc(strlen(bt_list[i]->ssid) + 1);
             strcpy(bt_list_entries[index].text, bt_list[i]->ssid);
             bt_list_entries[index].icon = "/headphones.png";
             if (bt_list[i]->state == BT_ENTRY_STATE_DISCONNECTED)
@@ -430,11 +436,17 @@ void state_radio_menu()
         uint16_t index = 0;
         uint16_t selected_index = 0;
 
-        memset(station_list_entries, 0, sizeof(struct list_entry) * STATION_LIST_SIZE);
+        station_list_entries = (struct list_entry *)ps_malloc(sizeof(struct list_entry) * stationCount);
+        if (station_list_entries == NULL)
+        {
+          Serial.println("ERROR: Failec to allocate station_list_entries!");
+        }
+
+        memset(station_list_entries, 0, sizeof(struct list_entry) * stationCount);
 
         for (uint16_t i = 0; i < stationCount; i++)
         {
-          station_list_entries[index].text = (char *) malloc(strlen(stationList[i].label.c_str()) + 1);
+          station_list_entries[index].text = (char *) ps_malloc(strlen(stationList[i].label.c_str()) + 1);
           strcpy(station_list_entries[index].text, stationList[i].label.c_str());
           station_list_entries[index].icon = "/radio.png";
           if (i == currentStation)
@@ -577,6 +589,8 @@ void state_bluetooth_menu()
               free(bt_list_entries[i].text);
             }
         }
+        free(bt_list_entries);
+        bt_list_entries = NULL;
 
         m_display->drawMainMenu();
         m_state = STATE_MAIN_MENU;
@@ -684,6 +698,8 @@ void state_station_menu()
               free(station_list_entries[i].text);
             }
         }
+        free(station_list_entries);
+        station_list_entries = NULL;
 
         m_display->drawRadioMenu();
         m_state = STATE_RADIO_MENU;

@@ -50,14 +50,14 @@ bool BtScanner::insert(const char* ssid)
     // insert new entry
     if (list[i] == NULL)
     {
-      struct bt_entry *entry = (struct bt_entry *) malloc(sizeof (struct bt_entry));
+      struct bt_entry *entry = (struct bt_entry *) ps_malloc(sizeof (struct bt_entry));
       if (entry == NULL)
       {
         xSemaphoreGive(mutex);
         return false;
       }
 
-      entry->ssid = (char *) malloc(strlen(ssid) + 1);
+      entry->ssid = (char *) ps_malloc(strlen(ssid) + 1);
       if (entry->ssid == NULL)
       {
         free(entry);
