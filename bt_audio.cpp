@@ -108,6 +108,12 @@ bool BtAudio::isValid(const char *ssid, esp_bd_addr_t address, int rssi)
 //  Serial.print("Found SSID: ");
 //  Serial.println(ssid);
 
+  // Bug??? getting some weird SSID 0xa5a5a5a5...
+  if ((ssid[0] == 0xa5) && (ssid[1] == 0xa5))
+  {
+    return false;
+  }
+
   m_btscanner->insert(ssid);
   return false;
 }
