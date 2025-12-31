@@ -30,7 +30,9 @@ struct StationInfo
   String label;
 };
 
-StationInfo stationList[100];
+#define STATION_LIST_SIZE 100
+
+StationInfo stationList[STATION_LIST_SIZE];
 uint8_t stationCount = 0;
 uint8_t currentStation = 0;
 
@@ -41,6 +43,10 @@ Preferences preferences;
 struct list_entry bt_list_entries[BT_SCANNER_LIST_SIZE];
 uint8_t bt_list_pages = 0;
 uint8_t bt_list_page = 0;
+
+struct list_entry station_list_entries[STATION_LIST_SIZE];
+uint8_t station_list_pages = 0;
+uint8_t station_list_page = 0;
 
 void init_psram()
 {
@@ -180,7 +186,10 @@ void tuneStation(uint8_t index)
 {
   Serial.print(F("Tunning to station "));
   Serial.println(stationList[index].label);
-  m_display->drawStationLabel(stationList[index].label);
+  if (m_state != STATE_STATION_LIST)
+  {
+    m_display->drawStationLabel(stationList[index].label);
+  }
   m_radio->tuneStation(stationList[index].freqIndex, stationList[index].serviceId, stationList[index].compId);
 }
 
@@ -391,6 +400,35 @@ void state_radio_menu()
     {
       if ((y > 20) && (y < 90))
       {
+        uint16_t j = 0;
+
+        memset(station_list_entries, 0, sizeof(struct list_entry) * STATION_LIST_SIZE);
+
+        for (uint16_t i = 0; i < stationCount; i++)
+        {
+          station_list_entries[j].text = (char *) malloc(strlen(stationList[i].label.c_str()) + 1);
+          strcpy(station_list_entries[j].text, stationList[i].label.c_str());
+          station_list_entries[j].icon = "/radio.png";
+          if (i == currentStation)
+          {
+            station_list_entries[j].is_selected = true;
+          }
+          else
+          {
+            station_list_entries[j].is_selected = false;
+          }
+          j++;
+        }
+
+        station_list_pages = 1;
+        if (j > 0)
+        {
+          station_list_pages = ((j - 1) / 3) + 1;
+        }
+        station_list_page = 0;
+
+        m_display->drawListMenu();
+        m_display->drawListMenuEntries(station_list_entries, station_list_page, station_list_pages);
         m_state = STATE_STATION_LIST;
       }
       else if ((y > 90) && (y < 160))
@@ -532,6 +570,98 @@ void state_bluetooth_menu()
   }
 }
 
+void state_station_menu()
+{
+  uint16_t x;
+  uint16_t y;
+
+  m_btaudio->update();
+  m_btscanner->update();
+
+  if (m_display->getTouch(&x, &y))
+  {
+    if ((x > 40) && (x < 376))
+    {
+      if (x > 50)
+      {
+        uint8_t index = 0xFF;
+        if ((y > 30) && (y < 100))
+        {
+          index = 3 * station_list_page;
+        }
+        else if ((y > 100) && (y < 170))
+        {
+          index = 3 * station_list_page + 1;
+        }
+        else if ((y > 170) && (y < 240))
+        {
+          index = 3 * station_list_page + 2;
+        }
+
+        if (index < stationCount)
+        {
+          if (station_list_entries[index].text)
+          {
+            if (station_list_entries[index].is_selected == false)
+            {
+              // unselect previous entry
+              for (uint16_t i = 0; i < stationCount; i++)
+              {
+                if (station_list_entries[i].is_selected == true)
+                {
+                  station_list_entries[i].is_selected = false;
+                }
+              }
+
+              station_list_entries[index].is_selected = true;
+
+              currentStation = index;
+              tuneStation(currentStation);
+              preferences.putUChar("currentStation", currentStation);
+            }
+
+            m_display->drawListMenuEntries(station_list_entries, station_list_page, station_list_pages);
+          }
+        }
+      }
+
+      if ((y > 240) && (y < 300))
+      {
+        // back
+        for (uint16_t i = 0; i < stationCount; i++)
+        {
+            if (station_list_entries[i].text)
+            {
+              free(station_list_entries[i].text);
+            }
+        }
+
+        m_display->drawRadioMenu();
+        m_state = STATE_RADIO_MENU;
+      }
+    }
+    else if ((x > 386) && (x < 430))
+    {
+      if ((y > 30) && (y < 74))
+      {
+        if (station_list_page > 0)
+        {
+          station_list_page--;
+          m_display->drawListMenuEntries(station_list_entries, station_list_page, station_list_pages);
+        }
+      }
+      else if ((y > 196) && (y < 240))
+      {
+        if (station_list_page < (station_list_pages - 1))
+        {
+          station_list_page++;
+          m_display->drawListMenuEntries(station_list_entries, station_list_page, station_list_pages);
+        }
+      }
+    }
+  }
+}
+
 void loop()
 {
 #ifdef DEBUG_HEAP
@@ -554,6 +684,10 @@ void loop()
       break;
     case STATE_RADIO_MENU:
       state_radio_menu();
+      break;
+    case STATE_STATION_LIST:
+      state_station_menu();
+      break;
     default:
       break;
   }
