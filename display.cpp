@@ -64,7 +64,7 @@ Display::Display()
 
   drawTime(12, 0, false);
   drawSlideShow(NULL, 0);
-  drawRdsText(m_welcomeText);
+  drawRdsText(String("Firmware V") + String(VERSION));
   drawBtIndicator(BT_INDICATOR_STATE_DISCONNECTED, false);
   drawSignalIndicator(0, false);
   drawControls();
@@ -146,8 +146,8 @@ void Display::drawReceivingScreen()
 
 void Display::drawScanningScreen(uint8_t progress, uint8_t stations)
 {
-  Serial.print("drawScanningScreen progress=");
-  Serial.println(progress);
+  //Serial.print("drawScanningScreen progress=");
+  //Serial.println(progress);
 
   if (progress == 0)
   {
@@ -505,7 +505,7 @@ void Display::drawListMenuEntries(struct list_entry *entries, const uint8_t page
   TFT_eSprite menu = TFT_eSprite(m_tft);
   menu.createSprite(380, 210);
 
-  uint32_t scrollbarHeight = 122 / pages;
+  float scrollbarHeight = 122 / (float)pages;
 
   menu.fillRect(0, 0, 380, 210, TFT_WHITE);
   menu.drawRect(0, 0, 380, 210, TFT_DARKGREY);
