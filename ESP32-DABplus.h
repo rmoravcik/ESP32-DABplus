@@ -1,7 +1,7 @@
 #ifndef ESP32_DABPLUS_H
 #define ESP32_DABPLUS_H
 
-#define VERSION "1.0.1"
+#define VERSION "1.0.2"
 
 enum State
 {

@@ -239,6 +239,12 @@ void setup()
   tuneStation(currentStation);
   m_radio->setVolume(volume);
   m_btaudio->setVolume(volume);
+
+  String bluetoothSSID = preferences.getString("bluetoothSSID", String());
+  if (!bluetoothSSID.isEmpty())
+  {
+    m_btaudio->connectTo(bluetoothSSID.c_str());
+  }
 }
 
 void one_sec_job()
@@ -585,6 +591,7 @@ void state_bluetooth_menu()
 
               bt_list_entries[index].is_selected = true;
               m_btaudio->connectTo(bt_list_entries[index].text);
+              preferences.putString("bluetoothSSID", String(bt_list_entries[index].text));
             }
 
             m_display->drawListMenuEntries(bt_list_entries, bt_list_page, bt_list_pages);
